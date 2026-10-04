@@ -1,5 +1,6 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from 'react';
-import { Link, Navigate, Route, Routes, useParams } from 'react-router-dom';
+import { Suspense, useEffect, useMemo, useState } from 'react';
+import { Link, Navigate, Route, Routes, useLocation, useParams } from 'react-router-dom';
+import { ErrorBoundary, lazyWithRetry } from './ErrorBoundary';
 import { isPackReady, loadPack, profileOf } from '../packs';
 import { MockSnowflake } from '../mock-snowflake';
 import { useStore } from '../store';
@@ -14,15 +15,15 @@ import { Icon } from '../components/icons';
 /** Last pack shown in this tab; switching industry resets the persona to the new pack's archetype A (spec section 2). */
 let lastPackId: string | null = null;
 
-const PlatformMap = lazy(() => import('../features/platform-map/PlatformMap'));
-const Explorer = lazy(() => import('../features/explorer/Explorer'));
-const Semantic = lazy(() => import('../features/semantic/Semantic'));
-const Glossary = lazy(() => import('../features/glossary/Glossary'));
-const Context = lazy(() => import('../features/context/ContextLayer'));
-const Certification = lazy(() => import('../features/certification/Certification'));
-const Agents = lazy(() => import('../features/agents/AgentStudio'));
-const Marketplace = lazy(() => import('../features/marketplace/Marketplace'));
-const MyAccess = lazy(() => import('../features/my-access/MyAccess'));
+const PlatformMap = lazyWithRetry(() => import('../features/platform-map/PlatformMap'));
+const Explorer = lazyWithRetry(() => import('../features/explorer/Explorer'));
+const Semantic = lazyWithRetry(() => import('../features/semantic/Semantic'));
+const Glossary = lazyWithRetry(() => import('../features/glossary/Glossary'));
+const Context = lazyWithRetry(() => import('../features/context/ContextLayer'));
+const Certification = lazyWithRetry(() => import('../features/certification/Certification'));
+const Agents = lazyWithRetry(() => import('../features/agents/AgentStudio'));
+const Marketplace = lazyWithRetry(() => import('../features/marketplace/Marketplace'));
+const MyAccess = lazyWithRetry(() => import('../features/my-access/MyAccess'));
 
 function Loading({ label }: { label: string }) {
   return (
@@ -34,6 +35,7 @@ function Loading({ label }: { label: string }) {
 
 export function PackShell() {
   const { pack: packId } = useParams();
+  const location = useLocation();
   const locked = useStore((s) => s.lockedPack);
   const ensurePack = useStore((s) => s.ensurePack);
   const toggleAdmin = useStore((s) => s.toggleAdmin);
@@ -101,6 +103,7 @@ export function PackShell() {
         <div className="flex min-h-0 flex-1">
           <NavRail />
           <main id="main" tabIndex={-1} className="min-w-0 outline-none flex-1 overflow-y-auto scroll-thin">
+            <ErrorBoundary resetKey={location.pathname} label={location.pathname}>
             <Suspense fallback={<Loading label="Loading…" />}>
               <Routes>
                 <Route index element={<Navigate to="map" replace />} />
@@ -116,6 +119,7 @@ export function PackShell() {
                 <Route path="*" element={<Navigate to="map" replace />} />
               </Routes>
             </Suspense>
+            </ErrorBoundary>
           </main>
         </div>
       </div>

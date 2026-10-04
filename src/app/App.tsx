@@ -6,6 +6,7 @@ import type { PackId } from '../types';
 import { StartScreen } from './StartScreen';
 import { PackShell } from './PackShell';
 import { Toaster } from './toast';
+import { ErrorBoundary } from './ErrorBoundary';
 
 function useThemeEffect() {
   const theme = useStore((s) => s.theme);
@@ -39,12 +40,14 @@ export function App() {
   useThemeEffect();
   usePackLock();
   return (
-    <HashRouter>
+    <HashRouter future={{ v7_relativeSplatPath: true }}>
+      <ErrorBoundary label="app">
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/:pack/*" element={<PackShell />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </ErrorBoundary>
       <Toaster />
     </HashRouter>
   );
