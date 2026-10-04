@@ -11,8 +11,12 @@ import { PROFILE as PUBLIC_SECTOR } from './public-sector/pack';
 
 const LOADERS: Partial<Record<PackId, () => Promise<{ buildPack: () => IndustryPack }>>> = {
   utilities: () => import('./utilities'),
+  banking: () => import('./banking'),
+  healthcare: () => import('./healthcare'),
+  insurance: () => import('./insurance'),
   manufacturing: () => import('./manufacturing'),
   'public-sector': () => import('./public-sector'),
+  retail: () => import('./retail'),
   telecom: () => import('./telecom'),
 };
 

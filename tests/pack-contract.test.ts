@@ -38,6 +38,12 @@ describe('pack contract', () => {
     }
   });
 
+  it('persona names are unique across packs', async () => {
+    const packs = await Promise.all(ready.map((p) => loadPack(p.id)));
+    const names = packs.flatMap((p) => p.personas.map((x) => `${x.name}`));
+    expect(names.filter((n, i) => names.indexOf(n) !== i)).toEqual([]);
+  });
+
   it('each pack builds fast enough to switch in under a second', async () => {
     for (const p of ready) {
       const mod = await import(/* @vite-ignore */ `../src/packs/${p.id}/index.ts`);

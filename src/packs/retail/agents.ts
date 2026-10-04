@@ -1,0 +1,28 @@
+import type { Agent } from '../../types';
+
+export const AGENTS: Agent[] = [
+  { id: 'AG-01', name: 'Merchandising Copilot', objectName: 'AGT_MERCHANDISING_COPILOT', domain: 'Customer & merchandising', status: 'Production',
+    description: 'Answers questions about Harbor Club members, loyalty sales, promotion performance and sales trends.',
+    productIds: ['DP-01', 'DP-02', 'DP-05'],
+    tools: [{ kind: 'cortex_analyst', target: 'SV_CUSTOMER_LOYALTY' }, { kind: 'cortex_analyst', target: 'SV_PROMO_EFFECTIVENESS' }, { kind: 'cortex_analyst', target: 'SV_STORE_SALES' }, { kind: 'cortex_search', target: 'CS_RETAIL_DOCS' }],
+    instructionIds: ['AI-01', 'AI-02', 'AI-03', 'AI-04'], evalAccuracy: 94, evalQuestions: 50,
+    scenarioIds: ['S-01', 'S-02', 'S-03', 'S-04', 'S-05'], kpiIds: ['K-01', 'K-02', 'K-03', 'K-04', 'K-05', 'K-22', 'K-23', 'K-24', 'K-25'] },
+  { id: 'AG-02', name: 'Store Operations Analyst', objectName: 'AGT_STORE_OPS_ANALYST', domain: 'Store operations', status: 'Production',
+    description: 'Answers questions about store sales, comparable store sales, baskets, promotions in stores and returns.',
+    productIds: ['DP-02', 'DP-06'],
+    tools: [{ kind: 'cortex_analyst', target: 'SV_STORE_SALES' }, { kind: 'cortex_search', target: 'CS_RETAIL_DOCS' }],
+    instructionIds: ['AI-05', 'AI-06', 'AI-07', 'AI-08'], evalAccuracy: 95, evalQuestions: 45,
+    scenarioIds: ['S-06', 'S-07', 'S-08', 'S-09'], kpiIds: ['K-06', 'K-07', 'K-08', 'K-09', 'K-10', 'K-11', 'K-26', 'K-27'] },
+  { id: 'AG-03', name: 'Supply Chain Assistant', objectName: 'AGT_SUPPLY_CHAIN_ASSISTANT', domain: 'Merchandising & supply chain', status: 'Production',
+    description: 'Answers questions about sell-through, stock-outs, weeks of supply, inventory turns and supplier delivery.',
+    productIds: ['DP-03', 'DP-04'],
+    tools: [{ kind: 'cortex_analyst', target: 'SV_SUPPLY_CHAIN' }, { kind: 'cortex_search', target: 'CS_RETAIL_DOCS' }],
+    instructionIds: ['AI-09', 'AI-10', 'AI-11', 'AI-12'], evalAccuracy: 92, evalQuestions: 40,
+    scenarioIds: ['S-10', 'S-11', 'S-12'], kpiIds: ['K-12', 'K-13', 'K-14', 'K-15', 'K-16', 'K-17', 'K-18', 'K-19', 'K-20', 'K-21'] },
+  { id: 'AG-04', name: 'Data Steward Assistant', objectName: 'AGT_DATA_STEWARD', domain: 'Governance', status: 'Pilot',
+    description: 'Finds governance gaps: CDEs without stewards, term usage and certification blockers.',
+    productIds: [],
+    tools: [{ kind: 'sql', target: 'GLOSSARY_GOVERNANCE_DP_REGISTRY' }],
+    instructionIds: ['AI-13', 'AI-14', 'AI-15', 'AI-16'], evalAccuracy: 90, evalQuestions: 25,
+    scenarioIds: ['S-13', 'S-14', 'S-15'], kpiIds: [] },
+];

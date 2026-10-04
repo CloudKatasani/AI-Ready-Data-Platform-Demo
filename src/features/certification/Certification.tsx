@@ -80,7 +80,7 @@ function Studio({ p }: { p: DataProduct }) {
   const doFix = (f: CertificationFailure) => {
     applyFix(pack.profile.id, p.id, f.checkId);
     setFixOpen(null);
-    toast(f.fix.kind === 'masking' ? `${pack.maskingPolicy} attached · re-running gate ${f.gate}` : `${f.fix.items.length} verified queries approved · re-running gate ${f.gate}`, 'good');
+    toast(f.fix.kind === 'masking' ? `${f.fix.label.replace(/^Attach /, '')} attached · re-running gate ${f.gate}` : `${f.fix.items.length} verified queries approved · re-running gate ${f.gate}`, 'good');
     animate(gates.find((g) => g.id === f.gate)!.checks.map((c) => c.id), f.gate);
   };
   const ready = isScript && cert?.ran && !anim && allPass(gates) && !published;
@@ -205,12 +205,13 @@ function FixPanel({ f, onApply }: { f: CertificationFailure; onApply: () => void
   const pack = usePack();
   const p = pack.products.find((x) => x.id === pack.certificationScript.productId)!;
   const [checked, setChecked] = useState(f.fix.items.map(() => true));
+  const policy = f.fix.label.replace(/^Attach /, '');
   if (f.fix.kind === 'masking') {
     return (
       <div className="space-y-4">
-        <p className="text-sm">The column is tagged as sensitive, but no masking policy is attached, so every role sees it in clear text. Attaching <span className="mono">{pack.maskingPolicy}</span> masks it for everyone except the data steward, in the Explorer, the Marketplace preview and agent answers.</p>
+        <p className="text-sm">The column is tagged as sensitive, but no masking policy is attached, so every role sees it in clear text. Attaching <span className="mono">{policy}</span> masks it for everyone except the data steward, in the Explorer, the Marketplace preview and agent answers.</p>
         <CodeBlock code={f.fix.items.join('\n')} />
-        <button className="btn-primary" onClick={onApply}><Icon name="lock" size={14} />Attach {pack.maskingPolicy}</button>
+        <button className="btn-primary" onClick={onApply}><Icon name="lock" size={14} />Attach {policy}</button>
       </div>
     );
   }

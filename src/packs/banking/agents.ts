@@ -1,0 +1,28 @@
+import type { Agent } from '../../types';
+
+export const AGENTS: Agent[] = [
+  { id: 'AG-01', name: 'Relationship Manager Assistant', objectName: 'AGT_RELATIONSHIP_MANAGER', domain: 'Retail banking', status: 'Production',
+    description: 'Helps relationship managers and retail analysts with customers, deposits, digital engagement, card spend and AML alerts on their customers’ accounts.',
+    productIds: ['DP-01', 'DP-04', 'DP-05'],
+    tools: [{ kind: 'cortex_analyst', target: 'SV_CUSTOMER_360' }, { kind: 'cortex_analyst', target: 'SV_AML_ALERTS' }, { kind: 'cortex_search', target: 'CS_BANKING_DOCS' }],
+    instructionIds: ['AI-01', 'AI-02', 'AI-03', 'AI-04'], evalAccuracy: 94, evalQuestions: 50,
+    scenarioIds: ['S-01', 'S-02', 'S-03', 'S-04', 'S-05'], kpiIds: ['K-01', 'K-02', 'K-03', 'K-04', 'K-05', 'K-19', 'K-22', 'K-23'] },
+  { id: 'AG-02', name: 'Risk & Liquidity Analyst', objectName: 'AGT_RISK_LIQUIDITY_ANALYST', domain: 'Treasury & credit risk', status: 'Production',
+    description: 'Answers questions about deposits, liquidity, net interest margin, credit quality and customer profitability.',
+    productIds: ['DP-02', 'DP-03', 'DP-06'],
+    tools: [{ kind: 'cortex_analyst', target: 'SV_LOAN_PORTFOLIO' }, { kind: 'cortex_analyst', target: 'SV_DEPOSITS_LIQUIDITY' }, { kind: 'cortex_search', target: 'CS_BANKING_DOCS' }],
+    instructionIds: ['AI-05', 'AI-06', 'AI-07', 'AI-08'], evalAccuracy: 95, evalQuestions: 45,
+    scenarioIds: ['S-06', 'S-07', 'S-08', 'S-09'], kpiIds: ['K-06', 'K-07', 'K-08', 'K-09', 'K-10', 'K-11', 'K-12', 'K-13', 'K-14', 'K-15', 'K-16', 'K-17', 'K-18', 'K-27', 'K-28'] },
+  { id: 'AG-03', name: 'Financial Crimes Copilot', objectName: 'AGT_FINANCIAL_CRIMES_COPILOT', domain: 'Financial crimes', status: 'Production',
+    description: 'Helps AML investigators and fraud managers with card fraud losses, alert volumes, escalation and SAR outcomes.',
+    productIds: ['DP-04', 'DP-05'],
+    tools: [{ kind: 'cortex_analyst', target: 'SV_CUSTOMER_360' }, { kind: 'cortex_analyst', target: 'SV_AML_ALERTS' }, { kind: 'cortex_search', target: 'CS_BANKING_DOCS' }],
+    instructionIds: ['AI-09', 'AI-10', 'AI-11', 'AI-12'], evalAccuracy: 92, evalQuestions: 40,
+    scenarioIds: ['S-10', 'S-11', 'S-12'], kpiIds: ['K-19', 'K-20', 'K-21', 'K-23', 'K-24', 'K-25', 'K-26'] },
+  { id: 'AG-04', name: 'Data Steward Assistant', objectName: 'AGT_DATA_STEWARD', domain: 'Governance', status: 'Pilot',
+    description: 'Finds governance gaps: CDEs without stewards, term usage and certification blockers.',
+    productIds: [],
+    tools: [{ kind: 'sql', target: 'GLOSSARY_GOVERNANCE_DP_REGISTRY' }],
+    instructionIds: ['AI-13', 'AI-14', 'AI-15', 'AI-16'], evalAccuracy: 90, evalQuestions: 25,
+    scenarioIds: ['S-13', 'S-14', 'S-15'], kpiIds: [] },
+];

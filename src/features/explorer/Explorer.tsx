@@ -207,7 +207,7 @@ function ExplorerInner({ id }: { id: string }) {
                       <span>Query ID <span className="mono">{queryId(`${id}:${persona.roleId}:${ran}`)}</span></span>
                       <span>{preview.ms} ms</span>
                       <span>{preview.rows.length} rows</span>
-                      {preview.maskedColumns.length > 0 && <span className="text-ink"><Icon name="lock" size={11} className="mr-1 inline" />{pack.maskingPolicy} masked {preview.maskedColumns.join(', ')}</span>}
+                      {preview.maskedColumns.length > 0 && <span className="text-ink"><Icon name="lock" size={11} className="mr-1 inline" />{[...new Set(o.columns.filter((c) => preview.maskedColumns.includes(c.name)).map((c) => pack.maskingPolicies[sensitiveTags(c)[0]] ?? pack.maskingPolicy))].join(', ')} masked {preview.maskedColumns.join(', ')}</span>}
                       {preview.rowPolicyApplied && <span className="text-ink"><Icon name="filter" size={11} className="mr-1 inline" />{pack.rowAccessPolicy}: {persona.rowFilter!.allowed.join(', ')} only</span>}
                     </>
                   )}
@@ -291,7 +291,7 @@ function ExplorerInner({ id }: { id: string }) {
                             <li key={c.name} className="flex flex-wrap items-center gap-2">
                               <span className="mono">{c.name}</span>
                               {sensitiveTags(c).map((s) => <span key={s} className="chip border-bad/40 bg-bad/10 text-bad">{s}</span>)}
-                              {ok ? <StatusChip status="pass" label={pack.maskingPolicy} /> : <StatusChip status="fail" label="No masking policy" />}
+                              {ok ? <StatusChip status="pass" label={pack.maskingPolicies[sensitiveTags(c)[0]] ?? pack.maskingPolicy} /> : <StatusChip status="fail" label="No masking policy" />}
                             </li>
                           );
                         })}

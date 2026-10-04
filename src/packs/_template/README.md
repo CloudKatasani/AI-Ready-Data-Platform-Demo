@@ -26,9 +26,9 @@ implementation; copy its structure.
    | `scenarios.ts` | 15 agent scenarios on the coverage pattern in spec section 9 | numbers computed, never hard-coded |
    | `index.ts` | assembles the pack, worksheet presets, DMF results, certification script | DP-05 fails gate 4 (7 of 10 VQs) and gate 6 (one sensitive column unmasked) |
 
-3. Register the loader in `src/packs/index.ts` (`LOADERS`) and mark the profile `ready: true`.
+3. Register the loader in `src/packs/index.ts` (`LOADERS`); the profile becomes ready automatically.
 4. Run `npm run validate:pack <pack-id>`. It checks counts against the pack contract, that every KPI maps to a
    term and a metric, that every scenario's computed numbers fall inside the KPI ranges, that paraphrases
    match their scenario, that every upstream object exists, and that DP-05 starts with exactly the two
    expected failures.
-5. Add the pack's objects to `tests/e2e/demo-script.spec.ts` (`PACKS`) and run `npm run e2e`.
+5. Run `npm test` and `npm run e2e`: the demo-script, accessibility and responsive tests pick up every registered pack automatically. Persona names must be unique across packs.

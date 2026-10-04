@@ -95,17 +95,36 @@ are 10 rows, so no virtualization is needed yet), SQL/YAML highlighting uses a s
 See [`src/packs/_template/README.md`](src/packs/_template/README.md). In short: copy the Utilities pack, fill
 the content files, register the loader in `src/packs/index.ts`, and run `npm run validate:pack <id>`.
 
+## Industry packs
+
+| Pack | Company | Database | Signature question | DP-05 (in certification) · gate-6 gap |
+| --- | --- | --- | --- | --- |
+| Utilities | Northvale Energy | `NVE_AI_PLATFORM` | SAIDI YTD excluding major event days, by operating company | Billing & Receivables · `FCT_BILLING.ACCOUNT_EMAIL` (PII) |
+| Telecom | Altair Communications | `ALT_AI_PLATFORM` | Postpaid churn last month by plan and region | Device & Plan Profitability · `DIM_SUBSCRIBER.MSISDN` (CPNI) |
+| Retail | Harbor & Pine | `HPR_AI_PLATFORM` | Promotions that lifted comparable sales above 5% last quarter | Promotion Effectiveness · `FCT_PROMO_SALES.CARD_LAST4` (PCI) |
+| Banking | Ridgeline Bank | `RLB_AI_PLATFORM` | NPL ratio by loan segment and its trend this year | AML Alerts & Cases · `FCT_AML_ALERT.ACCOUNT_NUMBER` (NPI) |
+| Insurance | Sentinel Mutual | `SMI_AI_PLATFORM` | Loss ratio by line of business this year, excluding catastrophes | Loss Reserves · `FCT_RESERVE.CLAIMANT_DOB` (PHI) |
+| Healthcare | Crestview Health System | `CVH_AI_PLATFORM` | 30-day all-cause readmission rate by service line | Clinical Supply Chain · `FCT_SUPPLY_USAGE.PATIENT_MRN` (PHI) |
+| Manufacturing | Forgepoint Industries | `FPI_AI_PLATFORM` | Lines with OEE below 65% last week and what drove the losses | Order to Delivery · `FCT_ORDER.CUSTOMER_CONTACT` (PII) |
+| Public Sector | Westland County Services | `WCS_AI_PLATFORM` | Benefit applications exceeding the 30-day processing standard | Program Integrity · `FCT_PAYMENT.CASE_GOV_ID` (government ID) |
+
+Every pack has 56–60 objects across the nine schemas, ≥ 26 glossary terms, 48 verified queries, ≥ 24 KPIs with
+target ranges, six data products, four agents, four personas and 15 computed agent scenarios, and passes the
+same validator and end-to-end tests.
+
+## Release gate
+
+| Check | How it is verified |
+| --- | --- |
+| Pack contract for every pack | `npm run validate:pack` (≈ 500 checks per pack) and `tests/pack-contract.test.ts` |
+| Demo script steps 1–6 for every pack | `tests/e2e/demo-script.spec.ts` |
+| All nine tabs at 1440 / 1024 / 390 px, light and dark, no console errors, no page-level horizontal scroll | `tests/e2e/responsive.spec.ts` |
+| WCAG 2.2 AA (axe: no serious or critical violations) on every tab, both themes, every pack | `tests/e2e/a11y.spec.ts`; Lighthouse accessibility 100 on the Utilities tabs |
+| No content from another pack; unique persona names; pack builds in < 1 s | `tests/pack-contract.test.ts` |
+| Agent numbers equal worksheet numbers; guardrails (no access, not certified, masking) | `tests/agents.test.ts` |
+| Initial bundle | ≈ 120 KB gzipped app shell; each pack is a lazy-loaded chunk |
+
 ## Build status
 
-| Milestone | Status |
-| --- | --- |
-| M1 Foundation (scaffold, tokens, shell, pack-prefixed routing, stores, start screen, command palette) | Done |
-| M2 Pack framework + mock Snowflake (types, registry, shared schemas, generators, policies, DDL, facade, validator) | Done |
-| M3 Utilities reference pack (Northvale Energy, 56 objects, 26 terms, 48 VQs, 26 KPIs, 15 scenarios) | Done |
-| M4 Platform Map + Explorer | Done |
-| M5 Semantic, Glossary, Context with cross-links and "Try a metric" | Done |
-| M6 Certification Studio with the scripted DP-05 flow | Done |
-| M7 Agent Studio (matcher, scenarios, streamed answers, trace, guardrails) | Done |
-| M8 Marketplace + My Access (requests, steward queue, KPI matrix) | Done |
-| M9 Industry packs: Banking, Healthcare, Retail, Telecom, Insurance (Must); Manufacturing, Public Sector (Should) | Next — profiles and start-screen tiles exist; packs show "in build" |
-| M10 Polish (presenter menu, pack lock, resets, single-file build in place; full a11y/Lighthouse pass pending) | Partly done |
+All milestones M1–M10 are complete: the framework, all nine tabs, and the eight industry packs (Utilities, Banking,
+Healthcare, Retail, Telecom, Insurance, Manufacturing, Public Sector).

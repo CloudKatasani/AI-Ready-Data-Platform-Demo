@@ -1,0 +1,28 @@
+import type { Agent } from '../../types';
+
+export const AGENTS: Agent[] = [
+  { id: 'AG-01', name: 'Claims Analyst', objectName: 'AGT_CLAIMS_ANALYST', domain: 'Claims', status: 'Production',
+    description: 'Answers questions about claim volumes, severity, open inventory, payments, cycle time and loss reserves.',
+    productIds: ['DP-01', 'DP-02', 'DP-05'],
+    tools: [{ kind: 'cortex_analyst', target: 'SV_CLAIMS_EXPERIENCE' }, { kind: 'cortex_analyst', target: 'SV_LOSS_RESERVES' }, { kind: 'cortex_search', target: 'CS_INSURANCE_DOCS' }],
+    instructionIds: ['AI-01', 'AI-02', 'AI-03', 'AI-04'], evalAccuracy: 94, evalQuestions: 50,
+    scenarioIds: ['S-01', 'S-02', 'S-03', 'S-04', 'S-05'], kpiIds: ['K-03', 'K-04', 'K-05', 'K-07', 'K-10', 'K-11', 'K-16', 'K-18', 'K-19', 'K-20', 'K-24', 'K-25', 'K-26'] },
+  { id: 'AG-02', name: 'Underwriting Copilot', objectName: 'AGT_UNDERWRITING_COPILOT', domain: 'Underwriting', status: 'Production',
+    description: 'Answers questions about loss ratios, combined ratio, premium, catastrophe losses and exposure.',
+    productIds: ['DP-02', 'DP-03', 'DP-06'],
+    tools: [{ kind: 'cortex_analyst', target: 'SV_CLAIMS_EXPERIENCE' }, { kind: 'cortex_analyst', target: 'SV_POLICYHOLDER_360' }, { kind: 'cortex_search', target: 'CS_INSURANCE_DOCS' }],
+    instructionIds: ['AI-05', 'AI-06', 'AI-07', 'AI-08'], evalAccuracy: 95, evalQuestions: 45,
+    scenarioIds: ['S-06', 'S-07', 'S-08', 'S-09'], kpiIds: ['K-01', 'K-02', 'K-06', 'K-08', 'K-09', 'K-10', 'K-12', 'K-13', 'K-14', 'K-15', 'K-17', 'K-27', 'K-28'] },
+  { id: 'AG-03', name: 'Distribution Insights', objectName: 'AGT_DISTRIBUTION_INSIGHTS', domain: 'Distribution', status: 'Production',
+    description: 'Answers questions about agencies, quotes, binds, new business premium and speed to quote.',
+    productIds: ['DP-04'],
+    tools: [{ kind: 'cortex_analyst', target: 'SV_DISTRIBUTION' }, { kind: 'cortex_search', target: 'CS_INSURANCE_DOCS' }],
+    instructionIds: ['AI-09', 'AI-10', 'AI-11', 'AI-12'], evalAccuracy: 92, evalQuestions: 35,
+    scenarioIds: ['S-10', 'S-11', 'S-12'], kpiIds: ['K-18', 'K-21', 'K-22', 'K-23'] },
+  { id: 'AG-04', name: 'Data Steward Assistant', objectName: 'AGT_DATA_STEWARD', domain: 'Governance', status: 'Pilot',
+    description: 'Finds governance gaps: CDEs without stewards, term usage and certification blockers.',
+    productIds: [],
+    tools: [{ kind: 'sql', target: 'GLOSSARY_GOVERNANCE_DP_REGISTRY' }],
+    instructionIds: ['AI-13', 'AI-14', 'AI-15', 'AI-16'], evalAccuracy: 90, evalQuestions: 25,
+    scenarioIds: ['S-13', 'S-14', 'S-15'], kpiIds: [] },
+];
