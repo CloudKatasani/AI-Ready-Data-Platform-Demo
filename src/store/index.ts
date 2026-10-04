@@ -3,6 +3,7 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import type { AccessCode, AccessRequestT, IndustryPack, LiveState, PackId } from '../types';
+import { extOf, type ExtState } from '../ext/state';
 
 export interface CertState {
   ran: boolean;
@@ -15,6 +16,8 @@ export interface PackState {
   requests: AccessRequestT[];
   cert: Record<string, CertState>;
   seq: number;
+  /** Enhancement features (E1–E11); optional so older sessions still load. Read with extOf(). */
+  ext?: Partial<ExtState>;
 }
 
 export type Theme = 'system' | 'light' | 'dark';
@@ -37,6 +40,11 @@ interface Store {
   setTheme: (t: Theme) => void;
   toggleAdmin: () => void;
   setLockedPack: (p: PackId | null) => void;
+  /** Presenter toggle: hide the Operate nav group for executive-only audiences. */
+  hideOperate: boolean;
+  toggleHideOperate: () => void;
+  /** Update a pack's enhancement state. */
+  patchExt: (packId: PackId, f: (e: ExtState) => ExtState) => void;
 }
 
 export function initialPackState(pack: IndustryPack): PackState {
@@ -117,6 +125,9 @@ export const useStore = create<Store>()(
         setTheme: (theme) => set({ theme }),
         toggleAdmin: () => set({ admin: !get().admin }),
         setLockedPack: (lockedPack) => set({ lockedPack }),
+        hideOperate: false,
+        toggleHideOperate: () => set({ hideOperate: !get().hideOperate }),
+        patchExt: (packId, f) => patch(packId, (s) => ({ ...s, ext: f(extOf(s)) })),
       };
     },
     { name: 'data-fabric-studio', storage: safeSession, version: 1 },

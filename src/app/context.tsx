@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useMemo } from 'react';
 import type { AccessCode, IndustryPack, Persona } from '../types';
 import { MockSnowflake } from '../mock-snowflake';
 import { accessCode, liveState, useStore } from '../store';
+import { extOf, type ExtState } from '../ext/state';
 
 interface Ctx { pack: IndustryPack; db: MockSnowflake }
 export const PackContext = createContext<Ctx | null>(null);
@@ -49,4 +50,14 @@ export function useIsSteward() {
 export function usePackPath() {
   const pack = usePack();
   return useCallback((p: string) => `/${pack.profile.id}/${p.replace(/^\//, '')}`, [pack.profile.id]);
+}
+
+/** Enhancement-feature state for the active pack, plus a patch function. */
+export function useExt() {
+  const pack = usePack();
+  const st = usePackState();
+  const patchExt = useStore((s) => s.patchExt);
+  const ext = useMemo(() => extOf(st), [st]);
+  const patch = useCallback((f: (e: ExtState) => ExtState) => patchExt(pack.profile.id, f), [patchExt, pack.profile.id]);
+  return [ext, patch] as const;
 }

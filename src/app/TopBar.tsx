@@ -145,7 +145,7 @@ function PersonaSwitcher() {
 function PresenterMenu() {
   const pack = usePack();
   const navigate = useNavigate();
-  const { admin, toggleAdmin, resetPack, resetAll, setPersona, lockedPack, setLockedPack } = useStore();
+  const { admin, toggleAdmin, resetPack, resetAll, setPersona, lockedPack, setLockedPack, hideOperate, toggleHideOperate } = useStore();
   const steps = demoSteps(pack);
   return (
     <Popover label="Presenter menu" align="right" trigger={() => <span className="flex items-center px-2 py-1.5 text-muted"><Icon name="more" size={18} /></span>}>
@@ -159,6 +159,12 @@ function PresenterMenu() {
           </MenuItem>
           <MenuItem onClick={() => { close(); setLockedPack(lockedPack ? null : pack.profile.id); toast(lockedPack ? 'Pack unlocked' : `Locked to ${pack.profile.industry}`); }}>
             <Icon name="lock" size={14} />{lockedPack ? 'Unlock pack switching' : `Lock app to ${pack.profile.industry}`}
+          </MenuItem>
+          <MenuItem onClick={() => { close(); toggleHideOperate(); toast(hideOperate ? 'Operate group shown' : 'Operate group hidden for an executive audience'); }}>
+            <Icon name="eye" size={14} />{hideOperate ? 'Show' : 'Hide'} the Operate group
+          </MenuItem>
+          <MenuItem onClick={() => { close(); navigate(`/${pack.profile.id}/health?break=1`); }}>
+            <Icon name="warn" size={14} />Break something (incident drill)
           </MenuItem>
           <div className="label mt-1 border-t border-line px-2.5 pb-1 pt-2.5">Jump to demo step</div>
           {steps.map((s, i) => (

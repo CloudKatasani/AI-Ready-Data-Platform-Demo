@@ -24,6 +24,17 @@ const Certification = lazyWithRetry(() => import('../features/certification/Cert
 const Agents = lazyWithRetry(() => import('../features/agents/AgentStudio'));
 const Marketplace = lazyWithRetry(() => import('../features/marketplace/Marketplace'));
 const MyAccess = lazyWithRetry(() => import('../features/my-access/MyAccess'));
+const Knockout = lazyWithRetry(() => import('../features/why/Knockout'));
+const Compare = lazyWithRetry(() => import('../features/why/Compare'));
+const Readiness = lazyWithRetry(() => import('../features/implement/Readiness'));
+const Roadmap = lazyWithRetry(() => import('../features/implement/Roadmap'));
+const BuildGuide = lazyWithRetry(() => import('../features/implement/BuildGuide'));
+const Coverage = lazyWithRetry(() => import('../features/implement/Coverage'));
+const OperatingModel = lazyWithRetry(() => import('../features/operate/OperatingModel'));
+const Cost = lazyWithRetry(() => import('../features/operate/Cost'));
+const Health = lazyWithRetry(() => import('../features/operate/Health'));
+const AgentQuality = lazyWithRetry(() => import('../features/operate/AgentQuality'));
+const Impact = lazyWithRetry(() => import('../features/operate/Impact'));
 
 function Loading({ label }: { label: string }) {
   return (
@@ -116,6 +127,18 @@ export function PackShell() {
                 <Route path="agents/:agent?" element={<Agents />} />
                 <Route path="marketplace" element={<Marketplace />} />
                 <Route path="my-access" element={<MyAccess />} />
+                <Route path="why/knockout" element={<Knockout />} />
+                <Route path="why/compare" element={<Compare />} />
+                <Route path="why" element={<Navigate to="knockout" replace />} />
+                <Route path="readiness/:mode?" element={<Readiness />} />
+                <Route path="roadmap" element={<Roadmap />} />
+                <Route path="build/:layer?/:step?" element={<BuildGuide />} />
+                <Route path="coverage" element={<Coverage />} />
+                <Route path="operating-model" element={<OperatingModel />} />
+                <Route path="cost" element={<Cost />} />
+                <Route path="health/:tab?" element={<Health />} />
+                <Route path="agent-quality/:tab?" element={<AgentQuality />} />
+                <Route path="impact" element={<Impact />} />
                 <Route path="*" element={<Navigate to="map" replace />} />
               </Routes>
             </Suspense>

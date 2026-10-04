@@ -371,6 +371,8 @@ export interface IndustryPack {
   warehouse: string;
   dmf: { fqn: string; metric: string; value: number; threshold: string; status: 'pass' | 'warn' | 'fail'; measuredAt: string }[];
   accessHistory: { queryId: string; role: string; fqn: string; columns: string; ts: string }[];
+  /** Enhancement-spec additions (E1–E11). Optional: a pack without it still loads. */
+  ext?: import('./ext/types').PackExtensions;
 }
 
 export interface AccessRequestT {
