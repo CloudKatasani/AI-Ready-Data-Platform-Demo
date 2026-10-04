@@ -5,7 +5,8 @@ import { Icon } from '../../components/icons';
 import { CodeBlock, DataGrid, Drawer, LayerBadge, LayerDot, PageHeader, StatusChip, Tabs } from '../../components/ui';
 import { LineageGraph } from '../../components/LineageGraph';
 import { cls, fmtBytes, fmtInt } from '../../lib/format';
-import { useAccess, useDb, useLive, usePack, usePackPath, usePersona } from '../../app/context';
+import { useAccess, useDb, useExt, useLive, usePack, usePackPath, usePersona } from '../../app/context';
+import { creatorOf } from '../../ext/buildGuide';
 import { hasMaskingPolicy, sensitiveTags } from '../../mock-snowflake/policies';
 import { queryId } from '../../mock-snowflake/generators';
 import { Worksheet } from './Worksheet';
@@ -142,6 +143,8 @@ function ExplorerInner({ id }: { id: string }) {
   const [ran, setRan] = useState(0);
   const [meta, setMeta] = useState(false);
   const fixes = live.fixes[pack.certificationScript.productId] ?? [];
+  const [ext] = useExt();
+  const builtBy = useMemo(() => creatorOf({ pack, db, live, tooling: ext.tooling }, id), [pack, db, live, ext.tooling, id]);
 
   useEffect(() => {
     setTab(o.rows ? 'preview' : o.type === 'SEMANTIC VIEW' || o.type === 'AGENT' ? 'ddl' : 'columns');
@@ -186,6 +189,7 @@ function ExplorerInner({ id }: { id: string }) {
               <h2 className="mono text-md font-semibold">{o.name}</h2>
               <span className="chip border-line text-muted">{o.type}</span>
               {o.targetLag && <span className="chip border-line text-muted">lag {o.targetLag}</span>}
+              {builtBy && <Link to={path(`build/${builtBy.layer}/${builtBy.id}`)} className="inline-flex items-center gap-1 text-xs font-medium text-accent hover:underline"><Icon name="hammer" size={12} />How is this built?</Link>}
               <button className="btn-ghost ml-auto min-[1280px]:hidden" onClick={() => setMeta(true)}><Icon name="info" size={14} />Details</button>
             </div>
             <div className="mt-1 text-xs text-muted">

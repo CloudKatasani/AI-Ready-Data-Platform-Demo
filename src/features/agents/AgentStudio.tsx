@@ -1,12 +1,15 @@
 import { Component, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { create } from 'zustand';
-import type { AccessCode, Agent, AgentAnswer, IndustryPack, LayerId, TraceStep } from '../../types';
+import type { AccessCode, Agent, AgentAnswer, IndustryPack, LayerId, ScenarioContext, TraceStep } from '../../types';
 import { AccessChip, BarChart, CertifiedSeal, CodeBlock, Drawer, layerColor, LineChart, PageHeader, SimpleTable, StatusChip } from '../../components/ui';
 import { Icon } from '../../components/icons';
 import { cls } from '../../lib/format';
 import { LAYER_BY_ID } from '../../layers';
-import { useAccess, useLive, usePack, usePackPath, usePersona } from '../../app/context';
+import { useAccess, useExt, useLive, usePack, usePackPath, usePersona } from '../../app/context';
+import { runKnockout, SEVERITY_LABEL, type KnockoutRun } from '../../ext/knockout';
+import { ALL_ON, SWITCHES } from '../../ext/types';
+import { ConfidenceBadge, SwitchRow } from '../why/parts';
 import { respond } from '../../agents/engine/respond';
 import { useStore } from '../../store';
 import { toast } from '../../app/toast';
@@ -16,7 +19,7 @@ import { toast } from '../../app/toast';
 // pack + agent, never persisted, and every message carries its own answer, so rendering never depends on
 // anything outside the message itself.
 
-interface Msg { id: string; role: 'user' | 'agent'; text: string; answer?: AgentAnswer; error?: string; persona: string }
+interface Msg { id: string; role: 'user' | 'agent'; text: string; answer?: AgentAnswer; error?: string; persona: string; sim?: { run: KnockoutRun; off: string[] } }
 
 let seq = 0;
 const nextId = () => `m${Date.now().toString(36)}${(seq++).toString(36)}`;
@@ -56,6 +59,29 @@ class Contain extends Component<{ children: ReactNode; what: string }, { error: 
       </div>
     );
   }
+}
+
+/** Re-answer a knockout question with the Studio's layer switches (simulation affects only this chat). */
+function simulate(pack: IndustryPack, answer: AgentAnswer, switches: typeof ALL_ON, ctx: ScenarioContext): { answer: AgentAnswer; sim: Msg['sim'] } | undefined {
+  const ks = pack.ext?.knockoutScenarios.find((k) => k.scenarioId === answer.scenarioId);
+  const off = SWITCHES.filter((x) => !switches[x.id]);
+  if (!ks || !off.length || answer.kind !== 'answer') return undefined;
+  const run = runKnockout(pack, ks, switches, ctx);
+  const r = run.result;
+  const trace: TraceStep[] = run.trace.map((st, i) => ({ title: st.skipped ? `${st.title} (skipped)` : st.title, layer: st.layer, detail: st.note, ms: st.skipped ? 0 : answer.trace[i]?.ms ?? 120, refs: st.skipped ? [] : answer.trace[i]?.refs ?? [] }));
+  return {
+    answer: {
+      ...answer,
+      summary: `${r.valueText} — ${r.caption}${r.notes.length ? `\n${r.notes.join(' ')}` : ''}`,
+      table: r.table ? { columns: r.table.columns, rows: r.table.rows, masked: r.table.masked } : undefined,
+      chart: undefined,
+      sql: r.sql,
+      sources: r.sources,
+      banner: undefined,
+      trace,
+    },
+    sim: { run, off: off.map((x) => x.label) },
+  };
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -164,8 +190,15 @@ function AnswerView({ m, onAsk, animate, onSwitch, access }: { m: Msg; onAsk: (q
   const req = a.requestAssetId;
   const reqState = req ? access(req) : undefined;
   const chart = a.chart && a.chart.labels.length === a.chart.values.length && a.chart.values.length > 0 ? a.chart : undefined;
+  const ks = pack.ext?.knockoutScenarios.find((k) => k.scenarioId === a.scenarioId);
   return (
     <div className="space-y-3">
+      {m.sim && (
+        <div className="rounded-md border border-warn/50 bg-warn/10 px-3 py-2 text-sm">
+          <div className="flex flex-wrap items-center gap-2"><Icon name="power" size={15} className="text-warn" /><strong>Simulated with layers off:</strong> {m.sim.off.join(', ')}<ConfidenceBadge c={m.sim.run.confidence} /></div>
+          {m.sim.run.failures.length > 0 && <ul className="mt-1 list-disc pl-5 text-xs">{m.sim.run.failures.map((f) => <li key={f.layer}><span className="font-semibold">{SEVERITY_LABEL[f.severity]}:</span> {f.reason}</li>)}</ul>}
+        </div>
+      )}
       {a.banner === 'not-certified' && (
         <div className="flex items-start gap-2 rounded-md border border-warn/50 bg-warn/10 px-3 py-2 text-sm text-ink">
           <Icon name="warn" size={16} className="mt-0.5 shrink-0 text-warn" />
@@ -193,6 +226,7 @@ function AnswerView({ m, onAsk, animate, onSwitch, access }: { m: Msg; onAsk: (q
           <div className="flex flex-wrap items-center gap-2">
             <Sources pack={pack} a={a} />
             {a.sql && <button className="btn-ghost text-xs" onClick={() => setSql(!sql)}><Icon name="table" size={13} />{sql ? 'Hide SQL' : 'Show SQL'}</button>}
+            {ks?.raw && <button className="btn-ghost text-xs" onClick={() => navigate(path(`why/compare?q=${ks.id}`))}><Icon name="scale" size={13} />Compare with raw</button>}
             {a.explorerTarget && <button className="btn-ghost text-xs" onClick={() => navigate(path(`explorer/${a.explorerTarget!.replace('.', '/')}`))}><Icon name="external" size={13} />Open in Explorer</button>}
             {a.switchAgentId && <button className="btn text-xs" onClick={() => onSwitch(a.switchAgentId!)}><Icon name="bot" size={13} />Switch to {pack.agents.find((x) => x.id === a.switchAgentId)?.name ?? a.switchAgentId}</button>}
             {req && (reqState === 'P'
@@ -260,6 +294,9 @@ function Studio({ a }: { a: Agent }) {
   const [animateId, setAnimateId] = useState<string | null>(null);
   const [revealed, setRevealed] = useState(0);
   const [settings, setSettings] = useState(false);
+  const [layersOpen, setLayersOpen] = useState(false);
+  const [ext, patchExt] = useExt();
+  const simOn = ext.studioSim && SWITCHES.some((x) => !ext.studioSwitches[x.id]);
   const scroller = useRef<HTMLDivElement>(null);
   const code = access(a.id);
   const canChat = code === 'G';
@@ -275,6 +312,10 @@ function Studio({ a }: { a: Agent }) {
     const agentMsg: Msg = { id: nextId(), role: 'agent', text: q, persona: persona.roleId };
     try {
       agentMsg.answer = respond(pack, a.id, q, persona, live, (asset) => access(asset));
+      if (simOn) {
+        const sim = simulate(pack, agentMsg.answer, ext.studioSwitches, { persona, live });
+        if (sim) { agentMsg.answer = sim.answer; agentMsg.sim = sim.sim; }
+      }
     } catch (e) {
       agentMsg.error = e instanceof Error ? e.message : String(e);
       console.error('[Agent Studio] answer engine failed:', e);
@@ -333,9 +374,17 @@ function Studio({ a }: { a: Agent }) {
             <Icon name="bot" size={16} />
             <div className="min-w-0 flex-1"><div className="text-sm font-semibold">{a.name}</div><div className="truncate text-xs text-muted">{a.description}</div></div>
             <span className="hidden text-xs text-muted sm:inline">eval {a.evalAccuracy}%</span>
+            <button className={cls('btn-ghost text-xs', simOn && 'text-warn')} onClick={() => setLayersOpen(true)} aria-label="Layer switches"><Icon name="power" size={15} /><span className="hidden sm:inline">Layers</span></button>
             <button className="btn-ghost" onClick={() => setSettings(true)} aria-label="Agent settings"><Icon name="gear" size={15} /></button>
             {msgs.length > 0 && <button className="btn-ghost text-xs" onClick={() => clear(key)}>Clear</button>}
           </div>
+          {simOn && (
+            <div role="status" className="flex flex-wrap items-center gap-2 border-b border-warn/40 bg-warn/15 px-4 py-1.5 text-xs">
+              <Icon name="warn" size={13} className="text-warn" /><strong>Simulation: layers off</strong>
+              <span className="text-muted">{SWITCHES.filter((x) => !ext.studioSwitches[x.id]).map((x) => x.label).join(', ')} · affects only this chat</span>
+              <button className="link ml-auto" onClick={() => patchExt((e) => ({ ...e, studioSim: false, studioSwitches: { ...ALL_ON } }))}>Turn all layers on</button>
+            </div>
+          )}
           <div ref={scroller} className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4 scroll-thin" aria-live="polite">
             {!canChat && (
               <div className="rounded-md border border-line bg-surface2 p-4 text-sm">
@@ -383,6 +432,22 @@ function Studio({ a }: { a: Agent }) {
         </aside>
       </div>
       <Drawer open={settings} onClose={() => setSettings(false)} title={`${a.name} settings`} width="max-w-md"><SettingsPanel a={a} /></Drawer>
+      <Drawer open={layersOpen} onClose={() => setLayersOpen(false)} title="Layer switches" subtitle="Simulate answers with layers removed" width="max-w-md">
+        <div className="space-y-4 text-sm">
+          <p>Turn a layer off and ask a knockout question again to see how the answer degrades. The simulation affects only this chat; the rest of the app keeps every layer on.</p>
+          <SwitchRow compact value={ext.studioSwitches} onChange={(id, on) => patchExt((e) => { const sw = { ...e.studioSwitches, [id]: on }; return { ...e, studioSwitches: sw, studioSim: SWITCHES.some((x) => !sw[x.id]) }; })} />
+          <div>
+            <div className="label mb-1">Questions that respond to switches</div>
+            {(pack.ext?.knockoutScenarios ?? []).filter((k) => k.agentId === a.id).length
+              ? <ul className="space-y-1">{pack.ext!.knockoutScenarios.filter((k) => k.agentId === a.id).map((k) => <li key={k.id}><button className="link text-left" onClick={() => { setLayersOpen(false); ask(k.question); }}>{k.question}</button></li>)}</ul>
+              : <p className="text-muted">This agent has no knockout questions. Try {pack.agents.find((x) => x.id === pack.ext?.knockoutScenarios[0]?.agentId)?.name ?? 'the signature agent'}.</p>}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button className="btn" onClick={() => patchExt((e) => ({ ...e, studioSim: false, studioSwitches: { ...ALL_ON } }))}><Icon name="reset" size={13} />All layers on</button>
+            <Link className="btn" to={path('why/knockout')}><Icon name="power" size={13} />Open the knockout simulator</Link>
+          </div>
+        </div>
+      </Drawer>
     </div>
   );
 }

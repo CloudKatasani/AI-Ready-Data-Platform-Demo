@@ -264,6 +264,8 @@ export interface AgentAnswer {
   explorerTarget?: string;
   suggestions?: string[];
   switchAgentId?: string;
+  /** Scenario the question matched, when it ran one */
+  scenarioId?: string;
   kind: 'answer' | 'decline' | 'clarify' | 'help';
 }
 

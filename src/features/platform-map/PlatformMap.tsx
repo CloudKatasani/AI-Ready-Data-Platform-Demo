@@ -1,15 +1,24 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { LAYERS, LAYER_BY_ID } from '../../layers';
 import type { LayerId } from '../../types';
 import { Icon } from '../../components/icons';
-import { layerColor, PageHeader, Stat } from '../../components/ui';
+import { layerColor, PageHeader, Stat, Tabs } from '../../components/ui';
 import { cls } from '../../lib/format';
-import { useDb, useLive, usePack, usePackPath } from '../../app/context';
+import { useDb, useExt, useLive, usePack, usePackPath } from '../../app/context';
+import { bandOf, overallScore } from '../../ext/readiness';
+import { stepsForLayer } from '../../ext/buildGuide';
 import { guidedPath } from '../../app/demoScript';
 import { verifiedQueriesLive } from '../../mock-snowflake/shared-schemas';
 
 const STACK: LayerId[] = ['agent', 'product', 'context', 'glossary', 'semantic', 'gold', 'silver', 'bronze'];
+const IMPLEMENTATION_PATH: { label: string; route: string }[] = [
+  { label: 'Assess readiness', route: 'readiness' },
+  { label: 'Plan the roadmap', route: 'roadmap' },
+  { label: 'Build layer by layer', route: 'build' },
+  { label: 'Track migration coverage', route: 'coverage' },
+  { label: 'Run and operate', route: 'operating-model' },
+];
 const reduced = () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
 export default function PlatformMap() {
@@ -18,6 +27,10 @@ export default function PlatformMap() {
   const live = useLive();
   const path = usePackPath();
   const navigate = useNavigate();
+  const [ext] = useExt();
+  const [sp, setSp] = useSearchParams();
+  const story = sp.get('story') === 'implementation' ? 'implementation' : 'business';
+  const setStory = (v: string) => setSp(v === 'implementation' ? { story: v } : {}, { replace: true });
   const [sel, setSel] = useState<LayerId>('semantic');
   const [lit, setLit] = useState<number>(-1);
   const timer = useRef<number[]>([]);
@@ -43,6 +56,9 @@ export default function PlatformMap() {
   const objs = schemas.find((s) => s.layer.id === sel)!.objects;
   const certified = pack.products.filter((p) => live.productStatus[p.id] === 'Certified').length;
   const vqs = verifiedQueriesLive(pack, live).length;
+  const readiness = overallScore(ext.readiness.answers);
+  const openIncidents = ext.incidents.open.length;
+  const firstStep = stepsForLayer(sel)[0];
 
   return (
     <div className="mx-auto max-w-[1400px] p-4 sm:p-6">
@@ -52,6 +68,9 @@ export default function PlatformMap() {
         layer={sel}
         right={<button className="btn" onClick={replay}><Icon name="play" size={14} />Replay flow</button>}
       />
+      <div className="mb-3 max-w-md">
+        <Tabs label="Story" value={story} onChange={setStory} tabs={[{ id: 'business', label: 'Business story' }, { id: 'implementation', label: 'Implementation story' }]} />
+      </div>
       <div className="grid grid-cols-1 gap-4 min-[1280px]:grid-cols-[minmax(0,2fr)_minmax(320px,1fr)]">
         <section className="panel p-3 sm:p-4" aria-label="Layer stack diagram">
           <div className="mb-2 text-center text-xs text-muted">{pack.database} · 8 schemas + cross-cutting governance</div>
@@ -119,6 +138,11 @@ export default function PlatformMap() {
             {layer.addsForAgents}
             {pack.layerExamples[sel] && <div className="mt-2 text-xs text-muted">In {pack.profile.company}: {pack.layerExamples[sel]}</div>}
           </div>
+          {firstStep && (
+            <Link to={path(`build/${firstStep.layer}/${firstStep.id}`)} className="mt-3 inline-flex items-center gap-1.5 text-sm font-medium text-accent hover:underline">
+              <Icon name="hammer" size={14} />How is this built?
+            </Link>
+          )}
           <div className="label mt-4">Snowflake features</div>
           <div className="mt-1.5 flex flex-wrap gap-1">{layer.features.map((f) => <span key={f} className="chip border-line bg-surface2">{f}</span>)}</div>
           <div className="label mt-4">Objects ({objs.length})</div>
@@ -135,17 +159,19 @@ export default function PlatformMap() {
         </aside>
       </div>
 
-      <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="mt-4 grid grid-cols-2 gap-3 lg:grid-cols-3 min-[1280px]:grid-cols-6">
         <Stat label="Data products" value={pack.products.length} sub={`${certified} certified`} onClick={() => navigate(path('marketplace'))} />
         <Stat label="Agents" value={pack.agents.length} sub={`${pack.agents.filter((a) => a.status === 'Production').length} in production`} onClick={() => navigate(path('agents'))} />
         <Stat label="Glossary terms" value={pack.glossary.length} sub={`${pack.glossary.filter((t) => t.isCde).length} CDEs`} onClick={() => navigate(path('glossary'))} />
         <Stat label="Verified queries" value={vqs} sub={`${pack.semanticViews.length} semantic views`} onClick={() => navigate(path('context/verified-queries'))} />
+        <Stat label="Readiness score" value={readiness !== undefined ? readiness.toFixed(1) : '—'} sub={readiness !== undefined ? bandOf(readiness) : 'Not assessed yet'} onClick={() => navigate(path('readiness'))} />
+        <Stat label="Open incidents" value={openIncidents} sub={openIncidents ? 'Affecting consumers' : 'All products healthy'} onClick={() => navigate(path('health'))} />
       </div>
 
       <section className="panel mt-4 p-4" aria-label="Guided demo">
-        <div className="label mb-2">Guided demo</div>
+        <div className="label mb-2">{story === 'implementation' ? 'Implementation story' : 'Guided demo'}</div>
         <ol className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-5">
-          {guidedPath(pack).map((s, i) => (
+          {(story === 'implementation' ? IMPLEMENTATION_PATH : guidedPath(pack)).map((s, i) => (
             <li key={s.label}>
               <Link to={path(s.route)} className="flex h-full items-center gap-2 rounded-md border border-line px-3 py-2 text-sm hover:border-accent">
                 <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-accent text-xs font-semibold text-white">{i + 1}</span>

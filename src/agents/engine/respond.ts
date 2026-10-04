@@ -18,7 +18,7 @@ export function respond(pack: IndustryPack, agentId: string, text: string, perso
   const m = matcherFor(pack);
   const own = m.rank(text, agentId);
   const best = own[0];
-  if (best && best.score >= MATCH.run) return runScenario({ pack, scenario: best.scenario, persona, live, access });
+  if (best && best.score >= MATCH.run) return { ...runScenario({ pack, scenario: best.scenario, persona, live, access }), scenarioId: best.scenario.id };
 
   const other = m.rank(text).find((r) => r.scenario.agentId !== agentId);
   if (other && other.score >= MATCH.run && (!best || other.score > best.score + 0.1)) {

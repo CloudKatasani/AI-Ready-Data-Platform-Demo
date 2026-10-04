@@ -65,7 +65,15 @@ function goldFacts(c: BuildCtx) {
 }
 const cdeCols = (o: SfObject) => o.columns.filter((x) => (x.tags ?? []).includes('CDE'));
 
-function dbtModel(_c: BuildCtx, o: SfObject): string {
+/** Key column shared by a model and one of its upstream objects (prefers surrogate keys, then ids). */
+function joinKey(c: BuildCtx, o: SfObject, upstream: string): string | undefined {
+  const up = c.pack.objects.find((x) => `${x.schema}.${x.name}` === upstream);
+  if (!up) return undefined;
+  const shared = o.columns.map((x) => x.name).filter((n) => up.columns.some((y) => y.name === n));
+  return shared.find((n) => n.endsWith('_KEY') && n !== 'DATE_KEY') ?? shared.find((n) => n.endsWith('_ID')) ?? shared.find((n) => n.endsWith('_KEY'));
+}
+
+function dbtModel(c: BuildCtx, o: SfObject): string {
   const ups = o.upstream.filter((u) => !u.startsWith('ext:'));
   const key = o.columns[0]?.name ?? 'ID';
   const refs = ups.map((u) => `{{ ref('${lower(u.split('.')[1])}') }}`);
@@ -83,7 +91,7 @@ function dbtModel(_c: BuildCtx, o: SfObject): string {
 
 select
 ${cols}
-from ${refs[0] ?? `{{ source('raw', '${lower(o.name)}') }}`}${refs.slice(1).map((r, i) => `\nleft join ${r} as u${i + 1} using (${o.columns.find((x) => x.name.endsWith('_KEY'))?.name ?? key})`).join('')}${dedup}`;
+from ${refs[0] ?? `{{ source('raw', '${lower(o.name)}') }}`}${refs.slice(1).map((r, i) => { const k = joinKey(c, o, ups[i + 1]); return k ? `\nleft join ${r} as u${i + 1} using (${k})` : `\n-- ${r}: enrichment lookup (no shared key column in the catalog)`; }).join('')}${dedup}`;
 }
 
 function dbtSchemaYml(objsIn: SfObject[]): string {
@@ -407,7 +415,7 @@ ${c.pack.glossary.flatMap((t) => t.mappings.map((m) => `  ('${t.id}', '${c.pack.
     pitfalls: ['Mapping only Gold columns leaves Silver changes invisible to impact analysis.', 'Free-text mappings break when columns are renamed; use FQNs.'] },
   { id: 'glossary-tags', layer: 'glossary', title: 'Tag CDE columns', effort: 'S',
     why: 'A CDE tag on the physical column lets policies, DMF schedules and certification checks find critical data automatically.',
-    features: ['Object tagging'], roles: ['steward', 'gov_lead'], prereqs: ['glossary-map', 'gov-tags'],
+    features: ['Object tagging'], roles: ['steward', 'gov_lead'], prereqs: ['glossary-map'],
     artifacts: (c) => [{ label: 'SQL', lang: 'sql', code: c.pack.objects.filter((o) => o.schema === 'CONFORMED_GOLD').flatMap((o) => cdeCols(o).map((x) => `ALTER TABLE ${c.pack.database}.${o.schema}.${o.name} MODIFY COLUMN ${x.name} SET TAG ${c.pack.database}.GOVERNANCE.CDE = 'TRUE';`)).slice(0, 12).join('\n') }],
     creates: () => [],
     pitfalls: ['Tagging by hand drifts from the CDE register; generate tags from it.', 'Tags on views are not inherited by base tables.'] },
