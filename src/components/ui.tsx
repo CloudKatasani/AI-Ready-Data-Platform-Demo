@@ -129,7 +129,7 @@ export function CodeBlock({ code, lang = 'sql', maxH = 'max-h-[420px]', copy = t
           <Icon name={copied ? 'check' : 'copy'} size={14} /> {copied ? 'Copied' : 'Copy'}
         </button>
       )}
-      <pre className={cls('overflow-auto p-3 pr-20 font-mono text-xs leading-5 scroll-thin', maxH)}>
+      <pre tabIndex={0} aria-label={`${lang.toUpperCase()} code`} className={cls('overflow-auto p-3 pr-20 font-mono text-xs leading-5 scroll-thin', maxH)}>
         <code>
           {toks.map((t, i) => (
             <span key={i} className={t.t === 'id' || t.t === 'punc' ? undefined : `tok-${t.t}`}>{t.v}</span>
@@ -268,7 +268,7 @@ const isNumType = (t?: string) => !!t && /^(NUMBER|FLOAT|INTEGER)/.test(t);
 export function DataGrid({ columns, rows, masked = [], types = {}, highlight, maxH = 'max-h-[440px]' }: { columns: string[]; rows: Record<string, Cell>[] | Cell[][]; masked?: string[]; types?: Record<string, string>; highlight?: (r: Record<string, Cell>) => string | undefined; maxH?: string }) {
   const asObj = (r: Record<string, Cell> | Cell[]): Record<string, Cell> => (Array.isArray(r) ? Object.fromEntries(columns.map((c, i) => [c, r[i]])) : r);
   return (
-    <div className={cls('overflow-auto rounded-md border border-line scroll-thin', maxH)}>
+    <div tabIndex={0} role="region" aria-label="Query results" className={cls('overflow-auto rounded-md border border-line scroll-thin', maxH)}>
       <table className="min-w-full border-collapse text-xs">
         <thead className="sticky top-0 z-[1] bg-surface2">
           <tr>
@@ -306,7 +306,7 @@ export function DataGrid({ columns, rows, masked = [], types = {}, highlight, ma
 
 export function SimpleTable({ columns, rows, masked = [] }: { columns: string[]; rows: (string | number)[][]; masked?: number[] }) {
   return (
-    <div className="overflow-x-auto rounded-md border border-line scroll-thin">
+    <div tabIndex={0} role="region" aria-label="Table" className="overflow-x-auto rounded-md border border-line scroll-thin">
       <table className="min-w-full text-xs">
         <thead className="bg-surface2">
           <tr>{columns.map((c) => <th key={c} scope="col" className="whitespace-nowrap px-2.5 py-1.5 text-left font-medium">{c}</th>)}</tr>

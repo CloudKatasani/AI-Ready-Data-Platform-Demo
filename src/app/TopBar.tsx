@@ -49,7 +49,7 @@ export function ThemeToggle() {
   const next: Record<Theme, Theme> = { system: 'light', light: 'dark', dark: 'system' };
   const icon = theme === 'dark' ? 'moon' : theme === 'light' ? 'sun' : 'eye';
   return (
-    <button className="btn-ghost" onClick={() => setTheme(next[theme])} aria-label={`Theme: ${theme}. Switch to ${next[theme]}`} title={`Theme: ${theme}`}>
+    <button className="btn-ghost" onClick={() => setTheme(next[theme])} aria-label={`${theme} theme — switch to ${next[theme]}`} title={`Theme: ${theme}`}>
       <Icon name={icon} />
       <span className="hidden text-xs capitalize xl:inline">{theme}</span>
     </button>
@@ -65,7 +65,7 @@ function PackSelector() {
   const tab = loc.pathname.split('/')[2] ?? 'map';
   return (
     <Popover
-      label="Industry pack"
+      label={`${p.industry} · ${p.company} ${pack.database} — switch industry`}
       trigger={() => (
         <span className="flex items-center gap-2 px-1.5 py-1">
           <span className="grid h-7 w-7 place-items-center rounded-md text-white" style={{ background: p.accent }}><Icon name={p.icon} size={15} /></span>
@@ -104,7 +104,7 @@ function PersonaSwitcher() {
   const admin = useStore((s) => s.admin);
   return (
     <Popover
-      label={`Role: ${persona.roleId}. Switch persona`}
+      label={`${persona.name} ${persona.roleId} — switch persona`}
       align="right"
       trigger={() => (
         <span className="flex items-center gap-2 px-2 py-1">
@@ -196,7 +196,7 @@ export function TopBar({ onSearch, onMenu }: { onSearch: () => void; onMenu?: ()
       </dl>
       <span className="chip ml-1 hidden border-warn/40 bg-warn/10 text-warn sm:inline-flex" title="All data is synthetic and generated in the browser"><Icon name="sparkle" size={11} />Synthetic data</span>
       <div className="flex-1" />
-      <button onClick={onSearch} className="flex items-center gap-2 rounded-md border border-line bg-surface2/60 px-2.5 py-1.5 text-sm text-muted hover:text-ink" aria-label="Search (Ctrl+K)">
+      <button onClick={onSearch} className="flex items-center gap-2 rounded-md border border-line bg-surface2/60 px-2.5 py-1.5 text-sm text-muted hover:text-ink" aria-label="Search Ctrl K">
         <Icon name="search" size={15} /><span className="hidden lg:inline">Search</span><kbd className="hidden rounded border border-line px-1 font-mono text-[10px] lg:inline">Ctrl K</kbd>
       </button>
       <ThemeToggle />

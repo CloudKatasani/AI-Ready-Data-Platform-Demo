@@ -11,6 +11,9 @@ import { CommandPalette } from './CommandPalette';
 import { toast } from './toast';
 import { Icon } from '../components/icons';
 
+/** Last pack shown in this tab; switching industry resets the persona to the new pack's archetype A (spec section 2). */
+let lastPackId: string | null = null;
+
 const PlatformMap = lazy(() => import('../features/platform-map/PlatformMap'));
 const Explorer = lazy(() => import('../features/explorer/Explorer'));
 const Semantic = lazy(() => import('../features/semantic/Semantic'));
@@ -45,6 +48,10 @@ export function PackShell() {
     void loadPack(profile.id as PackId).then((p) => {
       if (!alive) return;
       ensurePack(p);
+      if (lastPackId && lastPackId !== p.profile.id) {
+        useStore.getState().setPersona(p.profile.id, p.personas.find((x) => x.archetype === 'A')!.roleId);
+      }
+      lastPackId = p.profile.id;
       setPack(p);
     });
     return () => {
@@ -88,11 +95,12 @@ export function PackShell() {
   return (
     <PackContext.Provider value={ctx}>
       <div className="flex h-full flex-col">
+        <a href="#main" onClick={(e) => { e.preventDefault(); document.getElementById('main')?.focus(); }} className="sr-only z-[90] rounded-md bg-accent px-3 py-2 text-sm font-semibold text-white focus:not-sr-only focus:fixed focus:left-2 focus:top-2">Skip to content</a>
         <TopBar onSearch={() => setPalette(true)} />
         <TabStrip />
         <div className="flex min-h-0 flex-1">
           <NavRail />
-          <main id="main" className="min-w-0 flex-1 overflow-y-auto scroll-thin">
+          <main id="main" tabIndex={-1} className="min-w-0 outline-none flex-1 overflow-y-auto scroll-thin">
             <Suspense fallback={<Loading label="Loading…" />}>
               <Routes>
                 <Route index element={<Navigate to="map" replace />} />

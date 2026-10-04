@@ -122,7 +122,7 @@ function SemanticInner({ sv }: { sv: SemanticView }) {
     <div className="mx-auto max-w-[1500px] p-4 sm:p-6">
       <PageHeader title="Semantic Layer" layer="semantic" sub={<>Semantic views turn tables into named business metrics that BI tools and agents share, so “{pack.glossary.find((t) => t.id === pack.signature.termId)?.term}” means one thing everywhere.</>} />
       <div className="grid grid-cols-1 gap-4 min-[1280px]:grid-cols-[260px_minmax(0,1fr)_minmax(360px,440px)]">
-        <nav aria-label="Semantic views" className="space-y-2">
+        <nav aria-label="Semantic views" className="grid grid-cols-1 content-start gap-2 sm:grid-cols-2 min-[1280px]:grid-cols-1">
           {pack.semanticViews.map((s) => {
             const ps = pack.products.filter((p) => s.productIds.includes(p.id));
             return (

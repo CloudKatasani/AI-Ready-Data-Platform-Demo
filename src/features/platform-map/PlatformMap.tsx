@@ -77,9 +77,9 @@ export default function PlatformMap() {
                     <span className="min-w-0 flex-1">
                       <span className="flex flex-wrap items-baseline gap-x-2">
                         <span className="text-sm font-semibold">{l.n}. {l.label}</span>
-                        <span className="mono text-xs text-muted">{l.schema}</span>
+                        <span className="mono text-xs text-ink/80">{l.schema}</span>
                       </span>
-                      <span className="block truncate text-xs text-muted">{l.purpose}</span>
+                      <span className="block truncate text-xs text-ink/80">{l.purpose}</span>
                     </span>
                     <span className="mono shrink-0 rounded bg-surface/80 px-1.5 py-0.5 text-xs">{count(id)}</span>
                     {flash && <span className="absolute left-1.5 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-ink shadow" aria-hidden />}

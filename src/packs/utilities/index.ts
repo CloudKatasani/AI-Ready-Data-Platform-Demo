@@ -1,8 +1,7 @@
 // Utilities reference pack: Northvale Energy (spec sections 5–9).
-import type { IndustryPack, Persona, ScenarioContext, SfObject } from '../../types';
+import type { IndustryPack, Persona, ScenarioContext } from '../../types';
 import { buildSharedObjects } from '../../mock-snowflake/shared-schemas';
-import { Rng } from '../../mock-snowflake/rng';
-import { addDays, pad, ts } from '../../mock-snowflake/generators';
+import { buildAccessHistory, buildDmf } from '../shared/catalog-kit';
 import { fmtNum, fmtUsd } from '../../lib/format';
 import { generateUtilities } from './data';
 import { buildCatalog, GATE6_CHECK } from './catalog';
@@ -14,7 +13,7 @@ import { INITIAL_ACCESS, PERSONAS } from './personas';
 import { AGENTS } from './agents';
 import { buildProducts } from './products';
 import { buildScenarios } from './scenarios';
-import { AS_OF, KPI_RANGES, OPCOS } from './generators.config';
+import { KPI_RANGES, OPCOS } from './generators.config';
 import { PROFILE } from './pack';
 import * as Q from './queries';
 
@@ -30,30 +29,8 @@ export function buildPack(): IndustryPack {
   let packRef: IndustryPack | undefined;
   const scenarios = buildScenarios(data, () => packRef!);
 
-  const watched: SfObject[] = physical.filter((o) => o.layer !== 'bronze' || o.type === 'ICEBERG TABLE');
-  const rng = new Rng(PROFILE.seed + 99);
-  const dmf: IndustryPack['dmf'] = watched.flatMap((o) => {
-    const id = `${o.schema}.${o.name}`;
-    const vegWarn = o.name === 'DP_VEGETATION_RISK' || o.name === 'VEGETATION_SPAN';
-    const billWarn = o.name === 'FCT_BILLING' || o.name === 'DP_BILLING_RECEIVABLES';
-    return [
-      { fqn: id, metric: 'NULL_COUNT', value: vegWarn ? 112 : 0, threshold: '= 0 on CDE columns', status: vegWarn ? 'warn' : 'pass', measuredAt: ts(AS_OF, 361) },
-      { fqn: id, metric: 'DUPLICATE_COUNT', value: billWarn ? 3 : 0, threshold: '= 0', status: billWarn ? 'warn' : 'pass', measuredAt: ts(AS_OF, 362) },
-      { fqn: id, metric: 'FRESHNESS', value: vegWarn ? 1_520 : rng.int(4, 55), threshold: vegWarn ? '< 1,440 min' : '< 60 min', status: vegWarn ? 'fail' : 'pass', measuredAt: ts(AS_OF, 363) },
-      { fqn: id, metric: 'ROW_COUNT', value: o.rowCount, threshold: '±5% of forecast', status: 'pass', measuredAt: ts(AS_OF, 364) },
-    ] as IndustryPack['dmf'];
-  });
-
-  const roles = ['ANALYST_CUSTOMER', 'OPS_RELIABILITY', 'PROCUREMENT_MGR', 'DATA_STEWARD', 'TRANSFORM_ADMIN'];
-  const accessHistory: IndustryPack['accessHistory'] = physical.flatMap((o, i) =>
-    Array.from({ length: 5 }, (_, k) => {
-      const role = o.schema === 'DATA_PRODUCTS' || o.schema === 'CONFORMED_GOLD' ? roles[(i + k) % 4] : roles[k % 2 === 0 ? 4 : 3];
-      return {
-        queryId: `01b7${pad(i * 7 + k, 4)}-0001-7f3c-0000-${pad(41_000 + i * 31 + k * 7, 12)}`, role, fqn: `${o.schema}.${o.name}`,
-        columns: o.columns.slice(0, 3 + (k % 3)).map((c) => c.name).join(', '), ts: ts(addDays(AS_OF, -k), 600 - k * 47 + i),
-      };
-    }),
-  );
+  const dmf = buildDmf(physical, PROFILE.seed, { warn: ['FCT_BILLING', 'DP_BILLING_RECEIVABLES'], fail: ['DP_VEGETATION_RISK', 'VEGETATION_SPAN'] });
+  const accessHistory = buildAccessHistory(physical, ['ANALYST_CUSTOMER', 'OPS_RELIABILITY', 'PROCUREMENT_MGR', 'DATA_STEWARD']);
 
   const worksheet: IndustryPack['worksheet'] = [
     { id: 'W-01', label: 'SAIDI by opco, YTD excluding MED', sql: `SELECT opco, SUM(customer_minutes) / MAX(customers_served_opco) AS saidi_minutes\n  FROM ${DB}.DATA_PRODUCTS.DP_SYSTEM_RELIABILITY\n WHERE outage_date BETWEEN '2026-01-01' AND '2026-09-30' AND med_flag = FALSE\n GROUP BY opco ORDER BY saidi_minutes DESC;`,

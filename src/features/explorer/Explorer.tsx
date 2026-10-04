@@ -121,7 +121,7 @@ function MetaPanel({ o }: { o: SfObject }) {
       {products.length > 0 && (
         <div>
           <div className="label">Feeds data products</div>
-          <ul className="mt-1 space-y-1">{products.map((p) => <li key={p.id}><Link to={path(`certify/${p.id}`)} className="link">{p.id} {p.name}</Link></li>)}</ul>
+          <ul className="mt-1 space-y-1">{products.map((p) => <li key={p.id}><Link to={path(`certify/${p.id}`)} className="link inline-block py-1">{p.id} {p.name}</Link></li>)}</ul>
         </div>
       )}
     </div>
@@ -223,7 +223,7 @@ function ExplorerInner({ id }: { id: string }) {
               </div>
             )}
             {tab === 'columns' && (
-              <div className="overflow-x-auto rounded-md border border-line scroll-thin">
+              <div tabIndex={0} role="region" aria-label="Columns" className="overflow-x-auto rounded-md border border-line scroll-thin">
                 <table className="min-w-full text-sm">
                   <thead className="bg-surface2 text-left text-xs">
                     <tr><th className="px-3 py-2">Name</th><th className="px-3 py-2">Type</th><th className="px-3 py-2">Null</th><th className="px-3 py-2">Comment</th><th className="px-3 py-2">Tags</th></tr>
@@ -260,7 +260,7 @@ function ExplorerInner({ id }: { id: string }) {
             )}
             {tab === 'quality' && (
               dmf.length ? (
-                <div className="overflow-x-auto rounded-md border border-line">
+                <div tabIndex={0} role="region" aria-label="Data metric results" className="overflow-x-auto rounded-md border border-line">
                   <table className="min-w-full text-sm">
                     <thead className="bg-surface2 text-left text-xs"><tr><th className="px-3 py-2">Metric</th><th className="px-3 py-2 text-right">Value</th><th className="px-3 py-2">Threshold</th><th className="px-3 py-2">Status</th><th className="px-3 py-2">Measured</th></tr></thead>
                     <tbody>

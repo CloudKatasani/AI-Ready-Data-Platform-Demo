@@ -27,7 +27,15 @@ export default function MyAccess() {
     const r = (st?.requests ?? []).filter((x) => x.role === persona.roleId && x.assetId === id && x.status === 'approved').pop();
     return r?.decidedAt?.slice(0, 10) ?? (pack.initialAccess[persona.roleId]?.[id] === 'G' ? '2026-03-02' : '—');
   };
-  const kpis = pack.kpis.filter((k) => !q || `${k.name} ${k.id} ${k.definition}`.toLowerCase().includes(q.toLowerCase()) || (q.toLowerCase().includes('dso') && k.termId && pack.glossary.find((g) => g.id === k.termId)?.synonyms.some((s) => s.toLowerCase() === 'dso')));
+  // Search KPI names, definitions, metrics and the synonyms of their glossary term, word by word, so a question
+  // like "Which product answers DSO?" finds Days sales outstanding.
+  const kpiText = (k: (typeof pack.kpis)[number]) => {
+    const t = pack.glossary.find((g) => g.id === k.termId);
+    return `${k.name} ${k.id} ${k.definition} ${k.metric} ${t?.term ?? ''} ${(t?.synonyms ?? []).join(' ')}`.toLowerCase();
+  };
+  const STOP = new Set(['which', 'what', 'product', 'products', 'answers', 'answer', 'the', 'a', 'an', 'is', 'of', 'for', 'my', 'does', 'who', 'can', 'i']);
+  const words = q.toLowerCase().replace(/[^a-z0-9%\s-]/g, ' ').split(/\s+/).filter((w) => w && !STOP.has(w));
+  const kpis = pack.kpis.filter((k) => !words.length || words.every((w) => kpiText(k).includes(w)));
 
   return (
     <div className="mx-auto max-w-[1500px] p-4 sm:p-6">
@@ -41,7 +49,7 @@ export default function MyAccess() {
 
       <section className="panel mt-4 p-4" aria-label="My data products">
         <h2 className="mb-2 font-semibold">My data products</h2>
-        <div className="overflow-x-auto scroll-thin">
+        <div tabIndex={0} role="region" aria-label="My data products table" className="overflow-x-auto scroll-thin">
           <table className="min-w-full text-sm">
             <thead className="bg-surface2 text-left text-xs"><tr><th className="px-3 py-2">Name</th><th className="px-3 py-2">Status</th><th className="px-3 py-2">Version</th><th className="px-3 py-2">Access since</th><th className="px-3 py-2">KPIs</th><th className="px-3 py-2">Actions</th></tr></thead>
             <tbody>
@@ -97,7 +105,7 @@ export default function MyAccess() {
             <input className="input pl-8" placeholder="Which product answers DSO?" value={q} onChange={(e) => setQ(e.target.value)} aria-label="Filter KPIs" />
           </div>
         </div>
-        <div className="overflow-x-auto scroll-thin">
+        <div tabIndex={0} role="region" aria-label="KPI coverage table" className="overflow-x-auto scroll-thin">
           <table className="min-w-full text-xs">
             <thead>
               <tr className="bg-surface2">

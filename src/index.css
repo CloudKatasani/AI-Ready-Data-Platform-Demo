@@ -6,7 +6,7 @@
 :root {
   color-scheme: light;
   --bg: 243 246 248; --surface: 255 255 255; --surface-2: 234 239 243; --ink: 14 27 38; --muted: 91 107 120; --line: 214 222 229;
-  --accent: 29 95 209; --seal: 183 121 31; --good: 26 122 80; --warn: 143 91 15; --bad: 194 65 12;
+  --accent: 29 95 209; --seal: 140 90 16; --good: 22 110 72; --warn: 143 91 15; --bad: 194 65 12;
   --layer-bronze: 154 107 63; --layer-silver: 112 125 138; --layer-gold: 168 130 30; --layer-semantic: 29 95 209; --layer-glossary: 107 79 187;
   --layer-context: 15 138 138; --layer-product: 31 138 91; --layer-agent: 194 65 12; --layer-gov: 71 85 105;
 }
@@ -45,7 +45,7 @@ body {
   .label { @apply text-xs font-semibold uppercase tracking-wide text-muted; }
   .chip { @apply inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium whitespace-nowrap; }
   .input { @apply w-full rounded-md border border-line bg-surface px-2.5 py-1.5 text-sm text-ink placeholder:text-muted; }
-  .link { @apply text-accent hover:underline underline-offset-2; }
+  .link { @apply text-accent underline decoration-accent/40 underline-offset-2 hover:decoration-accent; }
   .mono { @apply font-mono tabnum; }
   .tok-kw { color: rgb(var(--layer-semantic)); font-weight: 500; }
   .tok-str { color: rgb(var(--layer-product)); }

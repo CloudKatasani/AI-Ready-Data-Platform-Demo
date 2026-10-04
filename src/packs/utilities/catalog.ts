@@ -1,39 +1,17 @@
 // Bronze / Silver / Gold objects and product output ports for NVE_AI_PLATFORM (spec section 5).
-import type { Column, ColumnTag, Row, SfObject } from '../../types';
+import type { SfObject } from '../../types';
+import { cdcColumns, col, dateKey, GATE6_CHECK, memo, withCdc } from '../shared/catalog-kit';
 import { Rng } from '../../mock-snowflake/rng';
 import { addDays, noisy, pad, round, ts } from '../../mock-snowflake/generators';
 import type { UtilData } from './data';
 import { AS_OF, STATE_TO_OPCO } from './generators.config';
 import { latestBills } from './queries';
 
-export const GATE6_CHECK = 'G6-MASK';
+export { GATE6_CHECK };
 
-const col = (name: string, type: string, comment: string, opts: { tags?: ColumnTag[]; termId?: string; nullable?: boolean; maskPendingFix?: string } = {}): Column => ({
-  name, type, comment, nullable: opts.nullable ?? true, tags: opts.tags, termId: opts.termId, maskPendingFix: opts.maskPendingFix,
-});
-const memo = <T,>(f: () => T) => {
-  let v: T | undefined;
-  return () => (v ??= f());
-};
-const dateKey = (d: string) => Number(d.replace(/-/g, ''));
-const cdc = [col('OP_TYPE', 'VARCHAR(1)', 'CDC operation: I insert, U update, D delete'), col('OP_TS', 'TIMESTAMP_NTZ', 'GoldenGate commit timestamp')];
+const cdc = cdcColumns();
 const opcoAccess = { column: 'OPCO' };
 const stateAccess = (c: string) => ({ column: c, map: STATE_TO_OPCO });
-
-/** Bronze rows with visible CDC noise: ~4% U duplicates, ~1% D, mixed case, untrimmed strings. */
-function withCdc<T>(rng: Rng, items: T[], toRow: (x: T, noise: boolean) => Row, baseTs: string, visible: (x: T) => boolean = () => true): Row[] {
-  const out: Row[] = [];
-  // Force one update duplicate and one delete into the first rows every persona can see, so the preview shows CDC noise.
-  const vis = items.map((x, i) => (visible(x) ? i : -1)).filter((i) => i >= 0);
-  const forced = [vis[1] ?? 1, vis[4] ?? 4];
-  items.forEach((x, i) => {
-    const t0 = ts(addDays(baseTs, Math.floor(i / 40)), 300 + ((i * 17) % 900));
-    out.push({ ...toRow(x, true), OP_TYPE: 'I', OP_TS: t0 });
-    if (i === forced[0] || rng.chance(0.04)) out.push({ ...toRow(x, true), OP_TYPE: 'U', OP_TS: ts(addDays(baseTs, Math.floor(i / 40)), 300 + ((i * 17) % 900) + 41) });
-    if (i === forced[1] || rng.chance(0.01)) out.push({ ...toRow(x, true), OP_TYPE: 'D', OP_TS: ts(addDays(baseTs, Math.floor(i / 40) + 1), 120) });
-  });
-  return out;
-}
 
 export function buildCatalog(d: UtilData, seed: number): SfObject[] {
   const rng = new Rng(seed + 7);

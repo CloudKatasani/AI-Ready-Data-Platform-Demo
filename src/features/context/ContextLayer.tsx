@@ -72,7 +72,7 @@ function DocSearch() {
   }, [q, pack]);
   return (
     <div className="space-y-4">
-      <div className="overflow-x-auto rounded-md border border-line">
+      <div tabIndex={0} role="region" aria-label="Indexed documents" className="overflow-x-auto rounded-md border border-line">
         <table className="min-w-full text-sm">
           <thead className="bg-surface2 text-left text-xs"><tr><th className="px-3 py-2">Doc</th><th className="px-3 py-2">Title</th><th className="px-3 py-2">Source</th><th className="px-3 py-2 text-right">Chunks</th><th className="px-3 py-2">Updated</th></tr></thead>
           <tbody>{pack.context.documents.map((d) => <tr key={d.id} className="border-t border-line/70"><td className="mono px-3 py-1.5 text-xs">{d.id}</td><td className="px-3 py-1.5">{d.title}</td><td className="mono px-3 py-1.5 text-[11px] text-muted">{d.source}</td><td className="mono px-3 py-1.5 text-right">{d.chunkCount}</td><td className="mono px-3 py-1.5 text-xs text-muted">{d.updatedAt}</td></tr>)}</tbody>
@@ -140,7 +140,7 @@ function Inner({ section }: { section: (typeof SECTIONS)[number]['id'] }) {
           </div>
         )}
         {section === 'rules' && (
-          <div className="overflow-x-auto">
+          <div tabIndex={0} role="region" aria-label="Business rules" className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead className="bg-surface2 text-left text-xs"><tr><th className="px-3 py-2">Rule</th><th className="px-3 py-2">Domain</th><th className="px-3 py-2">Rule text</th><th className="px-3 py-2">Applies to metric</th><th className="px-3 py-2">Source document</th></tr></thead>
               <tbody>

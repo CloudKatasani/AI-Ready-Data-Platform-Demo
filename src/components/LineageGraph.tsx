@@ -21,7 +21,7 @@ export function LineageGraph({ nodes, edges, focus, onOpen, compact }: { nodes: 
   });
   const layerOf = (id: string): LayerId | undefined => (id.startsWith('ext:') ? undefined : LAYER_BY_SCHEMA[id.split('.')[0]]?.id);
   return (
-    <div className={compact ? 'overflow-x-auto scroll-thin' : 'overflow-auto rounded-md border border-line bg-surface2/40 scroll-thin'}>
+    <div tabIndex={0} role="region" aria-label="Lineage graph" className={compact ? 'overflow-x-auto scroll-thin' : 'overflow-auto rounded-md border border-line bg-surface2/40 scroll-thin'}>
       <svg width={W} height={H} role="group" aria-label={`Lineage for ${focus}`}>
         {edges.map(([a, b]) => {
           const pa = pos.get(a);

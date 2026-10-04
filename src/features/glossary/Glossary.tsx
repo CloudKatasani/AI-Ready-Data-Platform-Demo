@@ -104,14 +104,14 @@ function GlossaryInner({ t }: { t: GlossaryTerm }) {
             <label className="flex items-center gap-1.5 text-sm"><input type="checkbox" checked={cdeOnly} onChange={(e) => setCdeOnly(e.target.checked)} />CDE only</label>
             <label className="flex items-center gap-1.5 text-sm"><input type="checkbox" checked={noSteward} onChange={(e) => setNoSteward(e.target.checked)} />Missing steward</label>
           </div>
-          <div className="overflow-x-auto scroll-thin">
+          <div tabIndex={0} role="region" aria-label="Terms table" className="overflow-x-auto scroll-thin">
             <table className="min-w-full text-sm">
               <thead className="bg-surface2 text-left text-xs">
                 <tr><th className="px-2.5 py-2">Term</th><th className="px-2.5 py-2">Domain</th><th className="px-2.5 py-2">Status</th><th className="px-2.5 py-2">CDE</th><th className="px-2.5 py-2">Owner</th><th className="px-2.5 py-2">Steward</th><th className="px-2.5 py-2 text-right">Cols</th></tr>
               </thead>
               <tbody>
                 {list.map((g) => (
-                  <tr key={g.id} onClick={() => navigate(path(`glossary/${g.id}`))} className={cls('cursor-pointer border-t border-line/70 hover:bg-surface2/60', g.id === t.id && 'bg-[rgb(var(--layer-glossary)/0.1)]')}>
+                  <tr key={g.id} onClick={() => navigate(path(`glossary/${g.id}`))} className={cls('cursor-pointer border-t border-line/70 hover:bg-surface2/60', g.id === t.id && 'bg-surface2/60 shadow-[inset_3px_0_0_rgb(var(--layer-glossary))]')}>
                     <td className="px-2.5 py-1.5"><Link to={path(`glossary/${g.id}`)} className="font-medium hover:underline">{g.term}</Link><div className="mono text-[11px] text-muted">{g.id}</div></td>
                     <td className="px-2.5 py-1.5 text-xs">{g.domain}</td>
                     <td className="px-2.5 py-1.5"><StatusChip status={g.status} /></td>
