@@ -1,0 +1,28 @@
+import type { Agent } from '../../types';
+
+export const AGENTS: Agent[] = [
+  { id: 'AG-01', name: 'Customer Insights', objectName: 'AGT_CUSTOMER_INSIGHTS', domain: 'Customer', status: 'Production',
+    description: 'Answers questions about customers, bills, arrears, digital adoption and usage.',
+    productIds: ['DP-01', 'DP-03', 'DP-05'],
+    tools: [{ kind: 'cortex_analyst', target: 'SV_CUSTOMER_360' }, { kind: 'cortex_analyst', target: 'SV_BILLING_AR' }, { kind: 'cortex_search', target: 'CS_UTILITY_DOCS' }],
+    instructionIds: ['AI-01', 'AI-02', 'AI-03', 'AI-04'], evalAccuracy: 94, evalQuestions: 50,
+    scenarioIds: ['S-01', 'S-02', 'S-03', 'S-04', 'S-05'], kpiIds: ['K-01', 'K-02', 'K-03', 'K-04', 'K-05', 'K-11', 'K-12', 'K-13', 'K-14', 'K-20', 'K-21', 'K-22', 'K-23'] },
+  { id: 'AG-02', name: 'Reliability Analyst', objectName: 'AGT_RELIABILITY_ANALYST', domain: 'Grid ops', status: 'Production',
+    description: 'Answers questions about outages, IEEE 1366 reliability indices and vegetation risk.',
+    productIds: ['DP-02', 'DP-06'],
+    tools: [{ kind: 'cortex_analyst', target: 'SV_RELIABILITY' }, { kind: 'cortex_search', target: 'CS_UTILITY_DOCS' }],
+    instructionIds: ['AI-05', 'AI-06', 'AI-07', 'AI-08'], evalAccuracy: 96, evalQuestions: 40,
+    scenarioIds: ['S-06', 'S-07', 'S-08', 'S-09'], kpiIds: ['K-06', 'K-07', 'K-08', 'K-09', 'K-10', 'K-24', 'K-25', 'K-26'] },
+  { id: 'AG-03', name: 'Procurement Copilot', objectName: 'AGT_PROCUREMENT_COPILOT', domain: 'Supply chain', status: 'Production',
+    description: 'Answers questions about spend, contract compliance and supplier delivery performance.',
+    productIds: ['DP-04'],
+    tools: [{ kind: 'cortex_analyst', target: 'SV_PROCUREMENT' }, { kind: 'cortex_search', target: 'CS_UTILITY_DOCS' }],
+    instructionIds: ['AI-09', 'AI-10', 'AI-11', 'AI-12'], evalAccuracy: 92, evalQuestions: 35,
+    scenarioIds: ['S-10', 'S-11', 'S-12'], kpiIds: ['K-15', 'K-16', 'K-17', 'K-18', 'K-19'] },
+  { id: 'AG-04', name: 'Data Steward Assistant', objectName: 'AGT_DATA_STEWARD', domain: 'Governance', status: 'Pilot',
+    description: 'Finds governance gaps: CDEs without stewards, term usage and certification blockers.',
+    productIds: [],
+    tools: [{ kind: 'sql', target: 'GLOSSARY_GOVERNANCE_DP_REGISTRY' }],
+    instructionIds: ['AI-13', 'AI-14', 'AI-15', 'AI-16'], evalAccuracy: 90, evalQuestions: 25,
+    scenarioIds: ['S-13', 'S-14', 'S-15'], kpiIds: [] },
+];

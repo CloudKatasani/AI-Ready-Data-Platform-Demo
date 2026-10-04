@@ -1,0 +1,63 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Design tokens (spec section 10). Values are RGB triplets so Tailwind can apply alpha. */
+:root {
+  color-scheme: light;
+  --bg: 243 246 248; --surface: 255 255 255; --surface-2: 234 239 243; --ink: 14 27 38; --muted: 91 107 120; --line: 214 222 229;
+  --accent: 29 95 209; --seal: 183 121 31; --good: 26 122 80; --warn: 143 91 15; --bad: 194 65 12;
+  --layer-bronze: 154 107 63; --layer-silver: 112 125 138; --layer-gold: 168 130 30; --layer-semantic: 29 95 209; --layer-glossary: 107 79 187;
+  --layer-context: 15 138 138; --layer-product: 31 138 91; --layer-agent: 194 65 12; --layer-gov: 71 85 105;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --bg: 12 20 27; --surface: 18 29 39; --surface-2: 24 38 51; --ink: 230 237 243; --muted: 147 163 177; --line: 36 56 74;
+    --accent: 110 160 255; --seal: 224 168 74; --good: 76 195 138; --warn: 224 168 74; --bad: 240 122 74;
+    --layer-bronze: 196 147 95; --layer-silver: 165 177 188; --layer-gold: 221 181 78; --layer-semantic: 110 160 255; --layer-glossary: 156 133 224;
+    --layer-context: 61 194 194; --layer-product: 76 195 138; --layer-agent: 240 122 74; --layer-gov: 132 148 171;
+  }
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: 12 20 27; --surface: 18 29 39; --surface-2: 24 38 51; --ink: 230 237 243; --muted: 147 163 177; --line: 36 56 74;
+  --accent: 110 160 255; --seal: 224 168 74; --good: 76 195 138; --warn: 224 168 74; --bad: 240 122 74;
+  --layer-bronze: 196 147 95; --layer-silver: 165 177 188; --layer-gold: 221 181 78; --layer-semantic: 110 160 255; --layer-glossary: 156 133 224;
+  --layer-context: 61 194 194; --layer-product: 76 195 138; --layer-agent: 240 122 74; --layer-gov: 132 148 171;
+}
+
+html, body, #root { height: 100%; }
+body {
+  @apply bg-bg text-ink font-sans text-base antialiased;
+}
+:focus-visible { outline: 2px solid rgb(var(--accent)); outline-offset: 2px; border-radius: 4px; }
+.tabnum { font-variant-numeric: tabular-nums; }
+.scroll-thin { scrollbar-width: thin; scrollbar-color: rgb(var(--line)) transparent; }
+
+@layer components {
+  .panel { @apply bg-surface border border-line rounded-lg; }
+  .btn { @apply inline-flex items-center gap-1.5 rounded-md border border-line bg-surface px-3 py-1.5 text-sm font-medium text-ink hover:bg-surface2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors; }
+  .btn-primary { @apply inline-flex items-center gap-1.5 rounded-md bg-accent px-3 py-1.5 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity; }
+  :root[data-theme='dark'] .btn-primary { color: rgb(12 20 27); }
+  .btn-ghost { @apply inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-sm text-muted hover:text-ink hover:bg-surface2; }
+  .h-title { @apply font-display font-semibold text-xl tracking-tight; }
+  .label { @apply text-xs font-semibold uppercase tracking-wide text-muted; }
+  .chip { @apply inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium whitespace-nowrap; }
+  .input { @apply w-full rounded-md border border-line bg-surface px-2.5 py-1.5 text-sm text-ink placeholder:text-muted; }
+  .link { @apply text-accent hover:underline underline-offset-2; }
+  .mono { @apply font-mono tabnum; }
+  .tok-kw { color: rgb(var(--layer-semantic)); font-weight: 500; }
+  .tok-str { color: rgb(var(--layer-product)); }
+  .tok-num { color: rgb(var(--layer-agent)); }
+  .tok-com { color: rgb(var(--muted)); font-style: italic; }
+  .tok-key { color: rgb(var(--layer-glossary)); }
+}
+
+@keyframes dfs-pulse { 0% { opacity: .25 } 50% { opacity: 1 } 100% { opacity: .25 } }
+.typing span { animation: dfs-pulse 1s infinite; }
+.typing span:nth-child(2) { animation-delay: .15s }
+.typing span:nth-child(3) { animation-delay: .3s }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
