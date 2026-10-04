@@ -1,0 +1,28 @@
+import type { Agent } from '../../types';
+
+export const AGENTS: Agent[] = [
+  { id: 'AG-01', name: 'Subscriber Insights', objectName: 'AGT_SUBSCRIBER_INSIGHTS', domain: 'Subscriber', status: 'Production',
+    description: 'Answers questions about the active base, ARPU, autopay, usage and device and plan profitability.',
+    productIds: ['DP-01', 'DP-03', 'DP-05'],
+    tools: [{ kind: 'cortex_analyst', target: 'SV_SUBSCRIBER_360' }, { kind: 'cortex_analyst', target: 'SV_DEVICE_PLAN_PROFITABILITY' }, { kind: 'cortex_search', target: 'CS_TELECOM_DOCS' }],
+    instructionIds: ['AI-01', 'AI-02', 'AI-03', 'AI-04'], evalAccuracy: 94, evalQuestions: 50,
+    scenarioIds: ['S-01', 'S-02', 'S-03', 'S-04', 'S-05'], kpiIds: ['K-01', 'K-02', 'K-03', 'K-04', 'K-05', 'K-22', 'K-23', 'K-24'] },
+  { id: 'AG-02', name: 'Network Operations Analyst', objectName: 'AGT_NETWORK_OPS_ANALYST', domain: 'Network', status: 'Production',
+    description: 'Answers questions about network quality, availability, field repairs and churn driven by network experience.',
+    productIds: ['DP-02', 'DP-04', 'DP-06'],
+    tools: [{ kind: 'cortex_analyst', target: 'SV_NETWORK_PERFORMANCE' }, { kind: 'cortex_analyst', target: 'SV_CHURN_RETENTION' }, { kind: 'cortex_search', target: 'CS_TELECOM_DOCS' }],
+    instructionIds: ['AI-05', 'AI-06', 'AI-07', 'AI-08'], evalAccuracy: 95, evalQuestions: 45,
+    scenarioIds: ['S-06', 'S-07', 'S-08', 'S-09'], kpiIds: ['K-10', 'K-11', 'K-12', 'K-13', 'K-14', 'K-15', 'K-16', 'K-17', 'K-18', 'K-19', 'K-20', 'K-21', 'K-25', 'K-26'] },
+  { id: 'AG-03', name: 'Revenue Assurance Copilot', objectName: 'AGT_REVENUE_ASSURANCE', domain: 'Revenue', status: 'Production',
+    description: 'Answers questions about ARPU, service revenue, rating-to-billing leakage and roaming revenue.',
+    productIds: ['DP-03'],
+    tools: [{ kind: 'cortex_analyst', target: 'SV_SUBSCRIBER_360' }, { kind: 'cortex_search', target: 'CS_TELECOM_DOCS' }],
+    instructionIds: ['AI-09', 'AI-10', 'AI-11', 'AI-12'], evalAccuracy: 93, evalQuestions: 35,
+    scenarioIds: ['S-10', 'S-11', 'S-12'], kpiIds: ['K-02', 'K-06', 'K-07', 'K-08', 'K-09'] },
+  { id: 'AG-04', name: 'Data Steward Assistant', objectName: 'AGT_DATA_STEWARD', domain: 'Governance', status: 'Pilot',
+    description: 'Finds governance gaps: CDEs without stewards, term usage and certification blockers.',
+    productIds: [],
+    tools: [{ kind: 'sql', target: 'GLOSSARY_GOVERNANCE_DP_REGISTRY' }],
+    instructionIds: ['AI-13', 'AI-14', 'AI-15', 'AI-16'], evalAccuracy: 90, evalQuestions: 25,
+    scenarioIds: ['S-13', 'S-14', 'S-15'], kpiIds: [] },
+];

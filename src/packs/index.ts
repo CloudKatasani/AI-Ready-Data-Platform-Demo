@@ -13,6 +13,7 @@ const LOADERS: Partial<Record<PackId, () => Promise<{ buildPack: () => IndustryP
   utilities: () => import('./utilities'),
   manufacturing: () => import('./manufacturing'),
   'public-sector': () => import('./public-sector'),
+  telecom: () => import('./telecom'),
 };
 
 /** Profiles are tiny and always available (start screen, pack selector). Full packs load on demand. */
