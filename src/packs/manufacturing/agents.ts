@@ -1,0 +1,28 @@
+import type { Agent } from '../../types';
+
+export const AGENTS: Agent[] = [
+  { id: 'AG-01', name: 'Plant Performance Analyst', objectName: 'AGT_PLANT_PERFORMANCE', domain: 'Operations', status: 'Production',
+    description: 'Answers questions about OEE, output, downtime, shift crews and customer order delivery.',
+    productIds: ['DP-01', 'DP-05'],
+    tools: [{ kind: 'cortex_analyst', target: 'SV_PLANT_PERFORMANCE' }, { kind: 'cortex_analyst', target: 'SV_ORDER_DELIVERY' }, { kind: 'cortex_search', target: 'CS_MFG_DOCS' }],
+    instructionIds: ['AI-01', 'AI-02', 'AI-03', 'AI-04'], evalAccuracy: 93, evalQuestions: 50,
+    scenarioIds: ['S-01', 'S-02', 'S-03', 'S-04', 'S-05'], kpiIds: ['K-01', 'K-02', 'K-03', 'K-04', 'K-05', 'K-06', 'K-07', 'K-21', 'K-22', 'K-23', 'K-24'] },
+  { id: 'AG-02', name: 'Quality Copilot', objectName: 'AGT_QUALITY_COPILOT', domain: 'Operations & quality', status: 'Production',
+    description: 'Finds where OEE is lost (availability, performance and quality losses) and answers questions about first-pass yield, scrap, cost of poor quality and energy per unit.',
+    productIds: ['DP-01', 'DP-02', 'DP-06'],
+    tools: [{ kind: 'cortex_analyst', target: 'SV_PLANT_PERFORMANCE' }, { kind: 'cortex_search', target: 'CS_MFG_DOCS' }],
+    instructionIds: ['AI-05', 'AI-06', 'AI-07', 'AI-08'], evalAccuracy: 95, evalQuestions: 45,
+    scenarioIds: ['S-06', 'S-07', 'S-08', 'S-09'], kpiIds: ['K-01', 'K-02', 'K-03', 'K-04', 'K-06', 'K-08', 'K-09', 'K-10', 'K-11', 'K-12', 'K-13', 'K-25', 'K-26'] },
+  { id: 'AG-03', name: 'Maintenance Planner', objectName: 'AGT_MAINTENANCE_PLANNER', domain: 'Maintenance & supply', status: 'Production',
+    description: 'Plans maintenance from asset reliability (MTBF, MTTR, planned maintenance) and from spare-part and material supplier performance.',
+    productIds: ['DP-03', 'DP-04'],
+    tools: [{ kind: 'cortex_analyst', target: 'SV_ASSET_MAINTENANCE' }, { kind: 'cortex_analyst', target: 'SV_SUPPLIER_PERFORMANCE' }, { kind: 'cortex_search', target: 'CS_MFG_DOCS' }],
+    instructionIds: ['AI-09', 'AI-10', 'AI-11', 'AI-12'], evalAccuracy: 92, evalQuestions: 40,
+    scenarioIds: ['S-10', 'S-11', 'S-12'], kpiIds: ['K-14', 'K-15', 'K-16', 'K-17', 'K-18', 'K-19', 'K-20'] },
+  { id: 'AG-04', name: 'Data Steward Assistant', objectName: 'AGT_DATA_STEWARD', domain: 'Governance', status: 'Pilot',
+    description: 'Finds governance gaps: CDEs without stewards, term usage and certification blockers.',
+    productIds: [],
+    tools: [{ kind: 'sql', target: 'GLOSSARY_GOVERNANCE_DP_REGISTRY' }],
+    instructionIds: ['AI-13', 'AI-14', 'AI-15', 'AI-16'], evalAccuracy: 90, evalQuestions: 25,
+    scenarioIds: ['S-13', 'S-14', 'S-15'], kpiIds: [] },
+];

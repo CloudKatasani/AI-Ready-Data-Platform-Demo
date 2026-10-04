@@ -88,7 +88,7 @@ export default function MyAccess() {
                 {!a.productIds.length && <span className="chip border-line text-muted">Governance metadata</span>}
               </div>
               <ul className="mt-2 flex-1 space-y-1 text-sm">
-                {pack.scenarios.filter((s) => s.agentId === a.id).slice(0, 3).map((s) => <li key={s.id}><Link className="link" to={path(`agents/${a.id}?q=${encodeURIComponent(s.question)}`)}>{s.question}</Link></li>)}
+                {pack.scenarios.filter((s) => s.agentId === a.id).slice(0, 3).map((s) => <li key={s.id}><Link className="link inline-block py-1" to={path(`agents/${a.id}?q=${encodeURIComponent(s.question)}`)}>{s.question}</Link></li>)}
               </ul>
               <button className="btn-primary mt-3 self-start" onClick={() => navigate(path(`agents/${a.id}`))}><Icon name="send" size={13} />Chat</button>
             </div>

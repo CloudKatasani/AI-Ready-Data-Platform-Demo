@@ -28,7 +28,7 @@ function Model({ sv }: { sv: SemanticView }) {
   const card = (t: SemanticView['tables'][number], strong?: boolean) => {
     const o = db.getObject(t.fqn);
     return (
-      <Link to={path(`explorer/${t.fqn.replace('.', '/')}`)} className={cls('block rounded-md border bg-surface px-3 py-2 hover:border-accent', strong ? 'border-[rgb(var(--layer-gold))] border-2' : 'border-line')}>
+      <Link to={path(`explorer/${t.fqn.replace('.', '/')}`)} className={cls('block min-w-0 break-all rounded-md border bg-surface px-3 py-2 hover:border-accent', strong ? 'border-[rgb(var(--layer-gold))] border-2' : 'border-line')}>
         <div className="text-xs text-muted">{t.alias}</div>
         <div className="mono text-sm font-semibold">{t.fqn.split('.')[1]}</div>
         <div className="mono text-[11px] text-muted">PK {t.pk} · {o?.columns.length ?? 0} cols</div>
@@ -41,7 +41,7 @@ function Model({ sv }: { sv: SemanticView }) {
       {sv.relationships.map((r) => {
         const to = sv.tables.find((t) => t.alias === r.to)!;
         return (
-          <div key={`${r.from}-${r.to}`} className="grid grid-cols-[auto_1fr] items-center gap-2 pl-4 sm:grid-cols-[150px_minmax(0,320px)]">
+          <div key={`${r.from}-${r.to}`} className="grid grid-cols-1 items-center gap-1 pl-4 sm:grid-cols-[minmax(0,190px)_minmax(0,320px)] sm:gap-2">
             <div className="flex items-center gap-1 text-xs text-muted">
               <span className="h-6 w-3 border-b border-l border-line" aria-hidden />
               <span className="mono">{r.from}</span>

@@ -11,6 +11,8 @@ import { PROFILE as PUBLIC_SECTOR } from './public-sector/pack';
 
 const LOADERS: Partial<Record<PackId, () => Promise<{ buildPack: () => IndustryPack }>>> = {
   utilities: () => import('./utilities'),
+  manufacturing: () => import('./manufacturing'),
+  'public-sector': () => import('./public-sector'),
 };
 
 /** Profiles are tiny and always available (start screen, pack selector). Full packs load on demand. */

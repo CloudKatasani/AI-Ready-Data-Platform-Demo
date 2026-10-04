@@ -102,7 +102,7 @@ for (const profile of PROFILES.filter((p) => isPackReady(p.id))) {
     // 5. Marketplace: analyst sees it Certified + New, request pending; steward approves
     await asPersona(page, p.analyst);
     await page.goto(`/#/${id}/marketplace`);
-    await expect(page.getByLabel('Certified this month').getByText(p.dp05)).toBeVisible();
+    await expect(page.getByLabel('Certified this month').getByText(p.dp05, { exact: true }).first()).toBeVisible();
     await expect(page.getByText('New').first()).toBeVisible();
     await page.goto(`/#/${id}/marketplace?item=DP-05&tab=access`);
     await expect(page.getByRole('dialog')).toContainText('Pending');
