@@ -60,7 +60,7 @@ const toneCls = (t: string) =>
   : 'text-muted border-line bg-surface2';
 
 export function StatusChip({ status, label }: { status: Status; label?: string }) {
-  const s = STATUS[status];
+  const s = STATUS[status] ?? { tone: 'muted', icon: 'info', shape: 'rounded-sm' };
   return (
     <span className={cls('chip', s.shape, toneCls(s.tone))}>
       <Icon name={s.icon} size={12} />
