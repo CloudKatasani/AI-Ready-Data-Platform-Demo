@@ -1,4 +1,4 @@
-// Core data model for Data Fabric Studio (spec section 11).
+// Core data model for AI Ready Data Platform (spec section 11).
 // UI components only ever read from the active IndustryPack.
 
 export type LayerId = 'bronze' | 'silver' | 'gold' | 'semantic' | 'glossary' | 'context' | 'product' | 'agent' | 'gov';

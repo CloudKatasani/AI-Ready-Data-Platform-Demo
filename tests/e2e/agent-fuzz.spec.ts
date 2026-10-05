@@ -40,14 +40,14 @@ for (const profile of PROFILES.filter((p) => isPackReady(p.id))) {
     await sweep('initial');
     // certify DP-05 and approve the analyst's request via the store (state as after the demo script)
     await page.evaluate(() => {
-      const raw = sessionStorage.getItem('data-fabric-studio');
+      const raw = sessionStorage.getItem('ai-ready-data-platform');
       if (!raw) return;
       const st = JSON.parse(raw);
       for (const p of Object.values<any>(st.state.packs)) {
         p.cert['DP-05'] = { ran: true, fixes: ['G4-VQ', 'G6-MASK'], published: { version: '1.0.0', certifier: 'x', date: '2026-10-04', score: 97 } };
         p.requests = p.requests.map((r: any) => ({ ...r, status: 'approved' }));
       }
-      sessionStorage.setItem('data-fabric-studio', JSON.stringify(st));
+      sessionStorage.setItem('ai-ready-data-platform', JSON.stringify(st));
     });
     await page.reload();
     await sweep('certified');

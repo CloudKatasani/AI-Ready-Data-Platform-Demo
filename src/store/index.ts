@@ -130,7 +130,7 @@ export const useStore = create<Store>()(
         patchExt: (packId, f) => patch(packId, (s) => ({ ...s, ext: f(extOf(s)) })),
       };
     },
-    { name: 'data-fabric-studio', storage: safeSession, version: 1 },
+    { name: 'ai-ready-data-platform', storage: safeSession, version: 1 },
   ),
 );
 

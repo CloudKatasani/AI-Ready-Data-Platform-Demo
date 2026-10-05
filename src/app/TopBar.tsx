@@ -191,7 +191,7 @@ export function TopBar({ onSearch, onMenu }: { onSearch: () => void; onMenu?: ()
   void onMenu;
   return (
     <header className="flex h-14 shrink-0 items-center gap-2 border-b border-line bg-surface px-2 sm:px-3">
-      <button className="hidden items-center gap-2 px-1 sm:flex" onClick={() => navigate('/')} aria-label="Data Fabric Studio home"><Logo /></button>
+      <button className="hidden items-center gap-2 px-1 sm:flex" onClick={() => navigate('/')} aria-label="AI Ready Data Platform home"><Logo /></button>
       <PackSelector />
       <div className="mx-1 hidden h-6 w-px bg-line md:block" />
       <dl className="hidden min-w-0 items-center gap-3 text-xs text-muted xl:flex">

@@ -11,7 +11,7 @@ export function StartScreen() {
       <header className="flex items-center justify-between border-b border-line bg-surface px-4 py-3 sm:px-6">
         <div className="flex items-center gap-2">
           <Logo />
-          <span className="font-display text-md font-semibold">Data Fabric Studio</span>
+          <span className="font-display text-md font-semibold">AI Ready Data Platform</span>
           <span className="chip border-line text-muted">Synthetic data</span>
         </div>
         <ThemeToggle />

@@ -1,4 +1,4 @@
-# Data Fabric Studio — AI-Ready Data Platform Demo
+# AI Ready Data Platform
 
 A browser-only, login-free demo app that shows a client in any industry how one Snowflake account carries every
 layer an AI agent needs: landed data, curated models, a semantic layer, a business glossary, a context layer,

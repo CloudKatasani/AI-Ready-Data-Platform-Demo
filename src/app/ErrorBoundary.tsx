@@ -41,7 +41,7 @@ export class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: { componentStack?: string | null }) {
-    console.error(`[Data Fabric Studio] ${this.props.label ?? 'view'} crashed:`, error, info.componentStack);
+    console.error(`[AI Ready Data Platform] ${this.props.label ?? 'view'} crashed:`, error, info.componentStack);
   }
 
   componentDidUpdate(prev: Props) {
