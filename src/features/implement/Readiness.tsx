@@ -8,6 +8,7 @@ import { toast } from '../../app/toast';
 import { bandOf, DEFAULT_TARGET, DEMO_COMPANY_ANSWERS, DIMENSIONS, dimScore, overallScore, PRESETS, QUESTIONS, questionText, rankGaps, type ReadinessDim } from '../../ext/readiness';
 import { phaseForDim } from '../../ext/roadmap';
 import { stepById } from '../../ext/buildGuide';
+import { useCoverage } from '../../ext/hooks';
 
 async function copy(text: string, what: string) {
   try {
@@ -201,6 +202,7 @@ function Results() {
   const overall = overallScore(answers);
   const gaps = useMemo(() => rankGaps(answers, targets), [answers, targets]);
   const scoreOf = (d: ReadinessDim) => dimScore(d, answers) ?? 1;
+  const cov = useCoverage();
   if (Object.keys(answers).length < QUESTIONS.length) {
     return <div className="panel p-6 text-sm">Answer all {QUESTIONS.length} questions (or load an example profile) to see results. <Link className="link" to={path('readiness/assess')}>Go to the assessment</Link></div>;
   }
@@ -249,7 +251,8 @@ ${[...new Set(gaps.slice(0, 5).map((g) => phaseForDim(g.dim).id))].sort().map((i
               <thead className="text-left text-xs text-muted"><tr><th className="py-1">Dimension</th><th className="py-1 text-right">Score</th><th className="py-1 text-right">Target</th></tr></thead>
               <tbody>{DIMENSIONS.map((d) => (
                 <tr key={d.id} className="border-t border-line/70">
-                  <td className="py-1">{d.label}{d.weight > 1 && <span className="ml-1 text-[10px] text-muted">×{d.weight}</span>}</td>
+                  <td className="py-1">{d.label}{d.weight > 1 && <span className="ml-1 text-[10px] text-muted">×{d.weight}</span>}
+                    {d.id === 'foundation' && cov.length > 0 && <Link to={path('coverage')} className="block text-[11px] text-accent hover:underline">Evidence: {cov.filter((r) => r.levelNow >= 1).length} of {cov.length} source tables landed, {cov.filter((r) => r.levelNow >= 2).length} curated</Link>}</td>
                   <td className="mono py-1 text-right">{scoreOf(d.id).toFixed(1)}</td>
                   <td className="py-1 text-right"><input aria-label={`Target for ${d.label}`} type="number" min={1} max={5} step={0.5} className="input w-16 py-0.5 text-right" value={targets[d.id] ?? DEFAULT_TARGET} onChange={(e) => patch((x) => ({ ...x, readiness: { ...x.readiness, targets: { ...x.readiness.targets, [d.id]: Math.max(1, Math.min(5, Number(e.target.value) || DEFAULT_TARGET)) } } }))} /></td>
                 </tr>

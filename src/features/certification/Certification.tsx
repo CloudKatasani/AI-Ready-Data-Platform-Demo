@@ -5,7 +5,8 @@ import { CertifiedSeal, CodeBlock, Drawer, PageHeader, StatusChip } from '../../
 import { Icon } from '../../components/icons';
 import { cls } from '../../lib/format';
 import { allPass, computeGates, gateStatus, releaseVersion } from '../../lib/certification';
-import { useIsSteward, useLive, usePack, usePackPath, usePackState, usePersona } from '../../app/context';
+import { useExt, useIsSteward, useLive, usePack, usePackPath, usePackState, usePersona } from '../../app/context';
+import { activityForGate, raciFor, ROLES } from '../../ext/raci';
 import { useStore } from '../../store';
 import { toast } from '../../app/toast';
 import { addDays } from '../../mock-snowflake/generators';
@@ -170,6 +171,7 @@ function Studio({ p }: { p: DataProduct }) {
             <h3 className="font-semibold">Gate {g.id}: {g.name}</h3>
             <span className="ml-auto"><StatusChip status={gateStatus(g)} /></span>
           </div>
+          <GateRaci gateName={g.name} />
           <ul className="space-y-2">
             {g.checks.map((c) => {
               const f = isScript && cert?.ran ? pack.certificationScript.failures.find((x) => x.checkId === c.id && !cert.fixes.includes(x.checkId)) : undefined;
@@ -198,6 +200,20 @@ function Studio({ p }: { p: DataProduct }) {
         {fixOpen && <FixPanel f={fixOpen} onApply={() => doFix(fixOpen)} />}
       </Drawer>
     </div>
+  );
+}
+
+function GateRaci({ gateName }: { gateName: string }) {
+  const [ext] = useExt();
+  const path = usePackPath();
+  const activity = activityForGate(gateName);
+  const row = raciFor(ext.raciStyle).find((r) => r[0] === activity);
+  if (!row) return null;
+  const who = (codes: string[]) => ROLES.filter((r) => codes.includes(row[3][r.id] ?? '')).map((r) => r.label).join(', ') || '—';
+  return (
+    <p className="mb-3 rounded-md bg-surface2/70 px-3 py-1.5 text-xs">
+      <Link className="font-medium hover:underline" to={path(`operating-model`)}>RACI · {activity}</Link>: <strong>A</strong> {who(['A', 'A/R'])} · <strong>R</strong> {who(['R', 'A/R'])} · <strong>C</strong> {who(['C'])}
+    </p>
   );
 }
 

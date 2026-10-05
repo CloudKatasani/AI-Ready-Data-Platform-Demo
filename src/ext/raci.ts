@@ -87,3 +87,15 @@ export function raciMarkdown(style: RaciStyle, labels: Record<string, string>): 
   const rows = raciFor(style);
   return `| Activity | ${ROLES.map((x) => labels[x.id] ?? x.label).join(' | ')} |\n| --- | ${ROLES.map(() => '---').join(' | ')} |\n${rows.map(([n, , , c]) => `| ${n} | ${ROLES.map((x) => c[x.id] || '—').join(' | ')} |`).join('\n')}\n`;
 }
+
+/** The RACI activity a certification gate belongs to, by its name. */
+export function activityForGate(gateName: string): string {
+  const n = gateName.toLowerCase();
+  if (n.includes('contract')) return 'Publish a data contract';
+  if (n.includes('quality') || n.includes('dq') || n.includes('fresh')) return 'Set DQ thresholds on CDEs';
+  if (n.includes('owner') || n.includes('steward')) return 'Assign a steward to a CDE';
+  if (n.includes('semantic') || n.includes('metric')) return 'Define a business metric';
+  if (n.includes('glossary') || n.includes('term')) return 'Approve a glossary term';
+  if (n.includes('access') || n.includes('security') || n.includes('privacy') || n.includes('pii') || n.includes('masking')) return 'Define masking and row access policies';
+  return 'Certify a data product';
+}

@@ -8,6 +8,7 @@ import { cls } from '../../lib/format';
 import { useDb, useExt, useLive, usePack, usePackPath } from '../../app/context';
 import { bandOf, overallScore } from '../../ext/readiness';
 import { stepsForLayer } from '../../ext/buildGuide';
+import { layerOfFqn, openIncidents } from '../../ext/health';
 import { guidedPath } from '../../app/demoScript';
 import { verifiedQueriesLive } from '../../mock-snowflake/shared-schemas';
 
@@ -16,8 +17,8 @@ const IMPLEMENTATION_PATH: { label: string; route: string }[] = [
   { label: 'Assess readiness', route: 'readiness' },
   { label: 'Plan the roadmap', route: 'roadmap' },
   { label: 'Build layer by layer', route: 'build' },
-  { label: 'Track migration coverage', route: 'coverage' },
-  { label: 'Run and operate', route: 'operating-model' },
+  { label: 'Knock out a layer', route: 'why/knockout' },
+  { label: 'Break something', route: 'health?break=1' },
 ];
 const reduced = () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
@@ -57,7 +58,8 @@ export default function PlatformMap() {
   const certified = pack.products.filter((p) => live.productStatus[p.id] === 'Certified').length;
   const vqs = verifiedQueriesLive(pack, live).length;
   const readiness = overallScore(ext.readiness.answers);
-  const openIncidents = ext.incidents.open.length;
+  const incidents = openIncidents(pack, ext);
+  const incidentLayers = new Map(incidents.map((i) => [layerOfFqn(pack, i.objectFqn), i]));
   const firstStep = stepsForLayer(sel)[0];
 
   return (
@@ -102,6 +104,13 @@ export default function PlatformMap() {
                     </span>
                     <span className="mono shrink-0 rounded bg-surface/80 px-1.5 py-0.5 text-xs">{count(id)}</span>
                     {flash && <span className="absolute left-1.5 top-1/2 h-3 w-3 -translate-y-1/2 rounded-full bg-ink shadow" aria-hidden />}
+                    {incidentLayers.has(id) && (
+                      <span className="absolute right-12 top-1/2 flex h-3.5 w-3.5 -translate-y-1/2" title={`Open incident: ${incidentLayers.get(id)!.title}`}>
+                        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-bad opacity-70 motion-reduce:animate-none" />
+                        <span className="relative inline-flex h-3.5 w-3.5 rounded-full bg-bad" />
+                        <span className="sr-only">Open incident on this layer: {incidentLayers.get(id)!.title}</span>
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -165,7 +174,7 @@ export default function PlatformMap() {
         <Stat label="Glossary terms" value={pack.glossary.length} sub={`${pack.glossary.filter((t) => t.isCde).length} CDEs`} onClick={() => navigate(path('glossary'))} />
         <Stat label="Verified queries" value={vqs} sub={`${pack.semanticViews.length} semantic views`} onClick={() => navigate(path('context/verified-queries'))} />
         <Stat label="Readiness score" value={readiness !== undefined ? readiness.toFixed(1) : '—'} sub={readiness !== undefined ? bandOf(readiness) : 'Not assessed yet'} onClick={() => navigate(path('readiness'))} />
-        <Stat label="Open incidents" value={openIncidents} sub={openIncidents ? 'Affecting consumers' : 'All products healthy'} onClick={() => navigate(path('health'))} />
+        <Stat label="Open incidents" value={incidents.length} sub={incidents.length ? 'Affecting consumers' : 'All products healthy'} onClick={() => navigate(path('health'))} />
       </div>
 
       <section className="panel mt-4 p-4" aria-label="Guided demo">

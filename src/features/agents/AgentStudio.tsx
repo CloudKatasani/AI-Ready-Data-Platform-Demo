@@ -10,6 +10,8 @@ import { useAccess, useExt, useLive, usePack, usePackPath, usePersona } from '..
 import { runKnockout, SEVERITY_LABEL, type KnockoutRun } from '../../ext/knockout';
 import { ALL_ON, SWITCHES } from '../../ext/types';
 import { ConfidenceBadge, SwitchRow } from '../why/parts';
+import { applyIncidents } from '../../ext/health';
+import { useAccuracy } from '../../ext/hooks';
 import { respond } from '../../agents/engine/respond';
 import { useStore } from '../../store';
 import { toast } from '../../app/toast';
@@ -205,6 +207,12 @@ function AnswerView({ m, onAsk, animate, onSwitch, access }: { m: Msg; onAsk: (q
           <span><strong>Not certified: use with caution.</strong> {(a.bannerText ?? '').replace('Not certified: use with caution. ', '')}</span>
         </div>
       )}
+      {a.banner === 'incident' && (
+        <div role="alert" className="flex items-start gap-2 rounded-md border border-bad/40 bg-bad/5 px-3 py-2 text-sm text-ink">
+          <Icon name="blast" size={16} className="mt-0.5 shrink-0 text-bad" />
+          <span><strong>Data health warning.</strong> {a.bannerText} <Link className="link" to={path('health/incidents')}>Open Data Health</Link></span>
+        </div>
+      )}
       {a.banner === 'no-access' && (
         <div className="flex items-start gap-2 rounded-md border border-line bg-surface2 px-3 py-2 text-sm">
           <Icon name="lock" size={16} className="mt-0.5 shrink-0 text-muted" />
@@ -244,6 +252,7 @@ function AnswerView({ m, onAsk, animate, onSwitch, access }: { m: Msg; onAsk: (q
 
 function SettingsPanel({ a }: { a: Agent }) {
   const pack = usePack();
+  const acc = useAccuracy();
   const path = usePackPath();
   return (
     <div className="space-y-4 text-sm">
@@ -251,7 +260,7 @@ function SettingsPanel({ a }: { a: Agent }) {
       <div><div className="label mb-1">Tools bound</div><ul className="space-y-1">{a.tools.map((t) => <li key={t.kind + t.target} className="flex flex-wrap gap-2"><span className="chip border-line">{t.kind.replace('_', ' ')}</span><span className="mono break-all">{t.target}</span></li>)}</ul></div>
       <div><div className="label mb-1">Products used</div><div className="flex flex-wrap gap-1">{a.productIds.map((id) => <Link key={id} className="chip border-line hover:border-accent" to={path(`certify/${id}`)}>{id} {pack.products.find((p) => p.id === id)?.name}</Link>)}{!a.productIds.length && <span className="text-muted">Glossary, Governance, DP registry</span>}</div></div>
       <div><div className="label mb-1">Instructions</div><ul className="space-y-1.5">{pack.context.instructions.filter((i) => i.agentId === a.id).map((i) => <li key={i.id}><span className="chip mr-1 border-line">{i.type}</span>{i.text}</li>)}</ul><Link className="link mt-1 inline-block text-xs" to={path('context/instructions')}>Open in Context Layer</Link></div>
-      <div><div className="label">Evaluation</div><div>{a.evalAccuracy}% on {a.evalQuestions} questions · eval set <span className="mono">{a.objectName.replace('AGT_', '').toLowerCase()}_golden_v3</span></div></div>
+      <div><div className="label">Evaluation</div><div>{acc(a.id)}% on {a.evalQuestions} questions · eval set <span className="mono">{a.objectName.replace('AGT_', '').toLowerCase()}_golden_v3</span></div></div>
     </div>
   );
 }
@@ -297,6 +306,7 @@ function Studio({ a }: { a: Agent }) {
   const [layersOpen, setLayersOpen] = useState(false);
   const [ext, patchExt] = useExt();
   const simOn = ext.studioSim && SWITCHES.some((x) => !ext.studioSwitches[x.id]);
+  const acc = useAccuracy();
   const scroller = useRef<HTMLDivElement>(null);
   const code = access(a.id);
   const canChat = code === 'G';
@@ -313,8 +323,11 @@ function Studio({ a }: { a: Agent }) {
     try {
       agentMsg.answer = respond(pack, a.id, q, persona, live, (asset) => access(asset));
       if (simOn) {
+        // A layer simulation replaces incident effects: the two demos never mix in one answer.
         const sim = simulate(pack, agentMsg.answer, ext.studioSwitches, { persona, live });
         if (sim) { agentMsg.answer = sim.answer; agentMsg.sim = sim.sim; }
+      } else {
+        agentMsg.answer = applyIncidents(pack, ext, a.id, agentMsg.answer);
       }
     } catch (e) {
       agentMsg.error = e instanceof Error ? e.message : String(e);
@@ -373,7 +386,7 @@ function Studio({ a }: { a: Agent }) {
           <div className="flex items-center gap-2 border-b border-line px-4 py-2.5">
             <Icon name="bot" size={16} />
             <div className="min-w-0 flex-1"><div className="text-sm font-semibold">{a.name}</div><div className="truncate text-xs text-muted">{a.description}</div></div>
-            <span className="hidden text-xs text-muted sm:inline">eval {a.evalAccuracy}%</span>
+            <span className="hidden text-xs text-muted sm:inline">eval {acc(a.id)}%</span>
             <button className={cls('btn-ghost text-xs', simOn && 'text-warn')} onClick={() => setLayersOpen(true)} aria-label="Layer switches"><Icon name="power" size={15} /><span className="hidden sm:inline">Layers</span></button>
             <button className="btn-ghost" onClick={() => setSettings(true)} aria-label="Agent settings"><Icon name="gear" size={15} /></button>
             {msgs.length > 0 && <button className="btn-ghost text-xs" onClick={() => clear(key)}>Clear</button>}

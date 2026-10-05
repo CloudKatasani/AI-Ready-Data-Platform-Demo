@@ -57,7 +57,24 @@ export type Workstream = 'platform' | 'engineering' | 'semantic' | 'products' | 
 export interface RoadmapDefaults { phase: number; progress: Partial<Record<Workstream, number>>; startDate: string }
 
 // ---------------------------------------------------------------- E5 coverage
-export interface InventoryTable { source: string; table: string; domain: string; level: 0 | 1; note?: string }
+export interface InventoryTable {
+  /** Source system, matching a pack profile source name where possible */
+  source: string;
+  table: string;
+  domain: string;
+  /** Manual level, used only when the table is not in the catalog (`lands` unset). */
+  level: 0 | 1;
+  /** RAW_BRONZE object (SCHEMA.NAME) this source table lands in; levels are then derived from the catalog. */
+  lands?: string;
+  /**
+   * Downstream columns (SCHEMA.OBJECT.COLUMN) this source table populates. When set, levels 2–4 follow these
+   * columns instead of everything downstream of `lands`.
+   */
+  carries?: string[];
+  /** Products that consume this table's columns; defaults to every product downstream of `lands`. */
+  consumedBy?: string[];
+  note?: string;
+}
 export interface LegacyReport { id: string; name: string; tool: string; owner: string; kpiIds: string[]; missing: string[] }
 
 // ---------------------------------------------------------------- E6 readiness
@@ -76,7 +93,8 @@ export interface IncidentScript {
   column?: string;
   dmf: { metric: string; value: number; threshold: number; unit: string };
   affects: { productId: string; status: 'Degraded' | 'Down' }[];
-  agentEffect: { agentId: string; mode: 'warn' | 'block'; message: string }[];
+  /** Effect on agent answers; `scenarioIds` limits it to those questions (otherwise every answer of the agent). */
+  agentEffect: { agentId: string; mode: 'warn' | 'block'; message: string; scenarioIds?: string[] }[];
   resolution: string;
   /** Minutes from fault to detection and from detection to resolution (postmortem). */
   ttdMin: number;

@@ -5,7 +5,10 @@ import { AccessChip, CertifiedSeal, CodeBlock, Drawer, KpiChip, PageHeader, Simp
 import { LineageGraph } from '../../components/LineageGraph';
 import { Icon } from '../../components/icons';
 import { cls, fmtInt, fmtNum } from '../../lib/format';
-import { useAccess, useDb, useIsSteward, useLive, usePack, usePackPath, usePackState, usePersona } from '../../app/context';
+import { useAccess, useDb, useExt, useIsSteward, useLive, usePack, usePackPath, usePackState, usePersona } from '../../app/context';
+import { useAccuracy, useHealth } from '../../ext/hooks';
+import { slaBreaches } from '../../ext/cost';
+import { HealthPill } from '../operate/Health';
 import { useStore } from '../../store';
 import { toast } from '../../app/toast';
 import { Rng } from '../../mock-snowflake/rng';
@@ -131,6 +134,11 @@ function Card({ i, isNew, onOpen }: { i: Item; isNew?: boolean; onOpen: () => vo
   const id = itemId(i);
   const kpis = (i.kind === 'product' ? i.p.kpiIds : i.a.kpiIds).slice(0, 3).map((k) => pack.kpis.find((x) => x.id === k)!).filter(Boolean);
   const status = i.kind === 'product' ? live.productStatus[i.p.id] : i.a.status;
+  const health = useHealth();
+  const acc = useAccuracy();
+  const [ext] = useExt();
+  const h = i.kind === 'product' ? health.product(i.p.id) : undefined;
+  const breach = i.kind === 'product' && slaBreaches(pack, ext.cost).has(i.p.id);
   return (
     <article className="panel relative flex flex-col overflow-hidden p-4 hover:border-accent">
       {isNew && <span className="absolute right-[-34px] top-3 rotate-45 bg-seal px-10 py-0.5 text-[11px] font-bold uppercase tracking-wide text-white">New</span>}
@@ -142,7 +150,12 @@ function Card({ i, isNew, onOpen }: { i: Item; isNew?: boolean; onOpen: () => vo
             <div className="text-xs text-muted">{id} · {i.kind === 'product' ? i.p.domain : i.a.domain} · {i.kind === 'product' ? i.p.owner : 'AI_PLATFORM_ADMIN'}</div>
           </div>
         </div>
-        <div className="mt-2">{status === 'Certified' ? <CertifiedSeal version={i.kind === 'product' ? live.productVersion[i.p.id] : undefined} /> : <StatusChip status={status} />}</div>
+        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+          {status === 'Certified' ? <CertifiedSeal version={i.kind === 'product' ? live.productVersion[i.p.id] : undefined} /> : <StatusChip status={status} />}
+          {h && h.status !== 'Healthy' && <HealthPill status={h.status} />}
+          {breach && <span className="chip border-bad/40 bg-bad/10 text-bad"><Icon name="warn" size={11} />SLA breach</span>}
+        </div>
+        {h && h.incidents.length > 0 && <p className="mt-1 text-xs text-bad">Open incident: {h.incidents.map((x) => x.title).join(', ')}</p>}
         <p className="mt-2 line-clamp-2 text-sm text-muted">{i.kind === 'product' ? i.p.description : i.a.description}</p>
       </button>
       <div className="mt-2 flex flex-wrap gap-1">{kpis.map((k) => <KpiChip key={k.id} name={k.name} />)}</div>
@@ -155,7 +168,7 @@ function Card({ i, isNew, onOpen }: { i: Item; isNew?: boolean; onOpen: () => vo
           </>
         ) : (
           <>
-            <div><div className="text-muted">Eval</div><div className="mono font-semibold">{i.a.evalAccuracy}%</div></div>
+            <div><div className="text-muted">Eval</div><div className="mono font-semibold">{acc(i.a.id)}%</div></div>
             <div><div className="text-muted">Products</div><div className="mono">{i.a.productIds.length || '—'}</div></div>
             <div><div className="text-muted">Questions</div><div className="mono">{i.a.evalQuestions}</div></div>
           </>
@@ -184,12 +197,16 @@ function Detail({ i, tab, setTab }: { i: Item; tab: string; setTab: (t: string) 
     : [{ id: 'overview', label: 'Overview' }, { id: 'kpis', label: 'KPIs & questions' }, { id: 'access', label: 'Access' }];
   const kpis = (p ? p.kpiIds : a!.kpiIds).map((k) => pack.kpis.find((x) => x.id === k)!).filter(Boolean);
   const port = p ? db.getObject(`DATA_PRODUCTS.${p.outputPort}`) : undefined;
+  const acc = useAccuracy();
+  const health = useHealth();
+  const h = p ? health.product(p.id) : undefined;
   return (
     <div className="space-y-4">
       <Tabs label="Details" tabs={tabs} value={tabs.some((t) => t.id === tab) ? tab : 'overview'} onChange={setTab} />
       {tab === 'overview' && (
         <div className="space-y-3 text-sm">
-          <div className="flex flex-wrap items-center gap-2">{p ? (live.productStatus[p.id] === 'Certified' ? <CertifiedSeal version={live.productVersion[p.id]} size="lg" /> : <StatusChip status={live.productStatus[p.id]} />) : <StatusChip status={a!.status} />}</div>
+          <div className="flex flex-wrap items-center gap-2">{p ? (live.productStatus[p.id] === 'Certified' ? <CertifiedSeal version={live.productVersion[p.id]} size="lg" /> : <StatusChip status={live.productStatus[p.id]} />) : <StatusChip status={a!.status} />}{h && <HealthPill status={h.status} />}</div>
+          {h && h.incidents.length > 0 && <div role="alert" className="rounded-md border border-bad/40 bg-bad/5 px-3 py-2 text-sm"><Icon name="warn" size={14} className="mr-1 inline text-bad" />{h.incidents.map((x) => `${x.title}: ${x.fault}`).join(' ')} <Link className="link" to={path('health/incidents')}>Open Data Health</Link></div>}
           <p>{p ? p.purpose : a!.description}</p>
           {p ? (
             <dl className="grid grid-cols-2 gap-3">
@@ -205,7 +222,7 @@ function Detail({ i, tab, setTab }: { i: Item; tab: string; setTab: (t: string) 
           ) : (
             <dl className="grid grid-cols-2 gap-3">
               <div><dt className="label">Object</dt><dd className="mono text-xs">{a!.objectName}</dd></div>
-              <div><dt className="label">Eval accuracy</dt><dd>{a!.evalAccuracy}% ({a!.evalQuestions} questions)</dd></div>
+              <div><dt className="label">Eval accuracy</dt><dd>{acc(a!.id)}% ({a!.evalQuestions} questions)</dd></div>
               <div className="col-span-2"><dt className="label">Products used</dt><dd className="flex flex-wrap gap-1">{a!.productIds.map((x) => <span key={x} className="chip border-line">{x} {pack.products.find((pp) => pp.id === x)?.name} · {live.productStatus[x]}</span>)}{!a!.productIds.length && 'Glossary, Governance, DP registry'}</dd></div>
               <div className="col-span-2"><dt className="label">Tools</dt><dd className="flex flex-wrap gap-1">{a!.tools.map((t) => <span key={t.target + t.kind} className="chip border-line">{t.kind.replace('_', ' ')} · {t.target}</span>)}</dd></div>
             </dl>

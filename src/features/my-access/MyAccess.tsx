@@ -4,6 +4,7 @@ import { CertifiedSeal, KpiChip, PageHeader, Stat, StatusChip } from '../../comp
 import { Icon } from '../../components/icons';
 import { cls } from '../../lib/format';
 import { useAccess, useLive, usePack, usePackPath, usePackState, usePersona } from '../../app/context';
+import { useHealth } from '../../ext/hooks';
 
 export default function MyAccess() {
   const pack = usePack();
@@ -14,6 +15,11 @@ export default function MyAccess() {
   const path = usePackPath();
   const navigate = useNavigate();
   const [sp] = useSearchParams();
+  const atRisk = useHealth().kpisAtRisk;
+  const riskIcon = (k: string) => {
+    const inc = atRisk.get(k);
+    return inc ? <Link to={path('health/incidents')} className="ml-1 inline-flex align-middle text-warn" title={`At risk: ${inc.title}`} aria-label={`At risk: open incident ${inc.title}`}><Icon name="warn" size={13} /></Link> : null;
+  };
   const focusKpi = sp.get('kpi');
   const [q, setQ] = useState(focusKpi ? pack.kpis.find((k) => k.id === focusKpi)?.name ?? '' : '');
 
@@ -61,7 +67,7 @@ export default function MyAccess() {
                     <td className="px-3 py-2">{live.productStatus[p.id] === 'Certified' ? <CertifiedSeal /> : <StatusChip status={live.productStatus[p.id]} />}</td>
                     <td className="mono px-3 py-2 text-xs">{live.productVersion[p.id]}</td>
                     <td className="mono px-3 py-2 text-xs">{since(p.id)}</td>
-                    <td className="px-3 py-2"><div className="flex flex-wrap gap-1">{p.kpiIds.map((k) => <KpiChip key={k} name={pack.kpis.find((x) => x.id === k)!.name} />)}</div></td>
+                    <td className="px-3 py-2"><div className="flex flex-wrap gap-1">{p.kpiIds.map((k) => <span key={k} className="inline-flex items-center"><KpiChip name={pack.kpis.find((x) => x.id === k)!.name} />{riskIcon(k)}</span>)}</div></td>
                     <td className="px-3 py-2">
                       <div className="flex flex-wrap gap-1.5">
                         <button className="btn text-xs" onClick={() => navigate(path(`explorer/DATA_PRODUCTS/${p.outputPort}`))}><Icon name="database" size={12} />Open in Explorer</button>
@@ -118,7 +124,7 @@ export default function MyAccess() {
             <tbody>
               {kpis.map((k) => (
                 <tr key={k.id} className={cls('border-t border-line/70', focusKpi === k.id && 'bg-accent/5')}>
-                  <th scope="row" className="sticky left-0 bg-surface px-3 py-1.5 text-left font-medium">{k.name}<div className="mono font-normal text-muted">{k.metric}</div></th>
+                  <th scope="row" className="sticky left-0 bg-surface px-3 py-1.5 text-left font-medium">{k.name}{riskIcon(k.id)}<div className="mono font-normal text-muted">{k.metric}</div></th>
                   <td className="px-2 py-1.5 text-center">{answerable(k.id) ? <span className="inline-flex items-center gap-1 text-good"><Icon name="pass" size={14} />Yes</span> : <span className="inline-flex items-center gap-1 text-muted"><Icon name="lock" size={13} />No</span>}</td>
                   {visibleProducts.map((p) => <Cell key={p.id} has={k.productIds.includes(p.id)} code={access(p.id)} assetId={p.id} />)}
                   {visibleAgents.map((a) => <Cell key={a.id} has={a.kpiIds.includes(k.id)} code={access(a.id) === 'G' && !k.productIds.some((pid) => access(pid) === 'G') ? 'R' : access(a.id)} assetId={access(a.id) === 'G' ? k.productIds[0] : a.id} />)}

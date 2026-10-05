@@ -256,7 +256,7 @@ export interface AgentAnswer {
   sources: { productId: string; version: string; certified: boolean }[];
   sql: string;
   trace: TraceStep[];
-  banner?: 'not-certified' | 'no-access' | 'masked';
+  banner?: 'not-certified' | 'no-access' | 'masked' | 'incident';
   bannerText?: string;
   /** Asset to request when the answer was declined */
   requestAssetId?: string;
