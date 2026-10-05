@@ -16,6 +16,7 @@ import { buildScenarios } from './scenarios';
 import { KPI_RANGES } from './generators.config';
 import { PROFILE } from './pack';
 import * as Q from './queries';
+import { buildExt } from './ext';
 
 const DB = `${PROFILE.dbPrefix}_AI_PLATFORM`;
 const allow = (p: Persona) => (p.rowFilter?.column === 'REGION' ? p.rowFilter.allowed : undefined);
@@ -82,7 +83,7 @@ export function buildPack(): IndustryPack {
     dmf, accessHistory,
   };
   const shared = buildSharedObjects({ ...core, physical });
-  const pack: IndustryPack = { ...core, objects: [...physical, ...shared] };
+  const pack: IndustryPack = { ...core, objects: [...physical, ...shared], ext: buildExt(data, physical) };
   packRef = pack;
   return pack;
 }
