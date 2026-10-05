@@ -27,6 +27,9 @@ npm run build:single   # one self-contained file: dist-single/index.html (works 
 To lock the app to one industry for a client demo, open it with `?pack=utilities` (or build with
 `VITE_LOCK_PACK=utilities`), or use **⋯ → Lock app** in the top bar.
 
+**Hosting on AWS:** step-by-step instructions for non-experts (S3 static website, or AWS Amplify for HTTPS) are in
+[`docs/DEPLOY-AWS.md`](docs/DEPLOY-AWS.md).
+
 ## What's in the app
 
 Twenty tabs, grouped the way a client meets the platform: the nine core tabs, plus the enhancement groups
