@@ -1,6 +1,6 @@
 // Bronze / Silver / Gold objects and product output ports for NVE_AI_PLATFORM (spec section 5).
 import type { SfObject } from '../../types';
-import { cdcColumns, col, dateKey, GATE6_CHECK, memo, withCdc } from '../shared/catalog-kit';
+import { cdcColumns, col, dateKey, GATE6_CHECK, memo, memoRng, withCdc } from '../shared/catalog-kit';
 import { Rng } from '../../mock-snowflake/rng';
 import { addDays, noisy, pad, round, ts } from '../../mock-snowflake/generators';
 import type { UtilData } from './data';
@@ -34,7 +34,7 @@ export function buildCatalog(d: UtilData, seed: number): SfObject[] {
       ],
       rowCount: 48_211_604, bytes: 6.1e9, owner: 'INGEST_ADMIN', lastAltered: '2026-09-30 06:14:22', upstream: ['ext:DB2 CIS'],
       rowAccess: stateAccess('ST'),
-      rows: memo(() => withCdc(rng, custSample, (c) => ({
+      rows: memoRng(rng, seed + 701, () => withCdc(rng, custSample, (c) => ({
         CUST_NO: rng.chance(0.3) ? `${c.custNo}  ` : c.custNo, NM_FIRST: noisy(rng, c.first), NM_LAST: noisy(rng, c.last),
         EMAIL_ADDR: rng.chance(0.3) ? c.email.toUpperCase() : c.email, ADDR_LN1: noisy(rng, c.street.toUpperCase()), CITY: noisy(rng, c.city),
         ST: c.state, RATE_CD: c.rateClass.replace('-', ''), STAT_CD: c.status === 'Active' ? 'A' : 'I',
@@ -50,7 +50,7 @@ export function buildCatalog(d: UtilData, seed: number): SfObject[] {
       comment: 'Interval reads from the AMI head-end (15-minute kWh)',
       columns: [col('METER_ID', 'VARCHAR(12)', 'Meter id'), col('READ_TS', 'TIMESTAMP_NTZ', 'Interval end'), col('KWH_VAL', 'NUMBER(10,3)', 'Interval kWh'), col('QUAL_FLG', 'VARCHAR(2)', 'Quality flag (V valid, E estimated, M missing)'), ...cdc],
       rowCount: 52_415_880_112, bytes: 3.2e12, owner: 'INGEST_ADMIN', lastAltered: '2026-09-30 06:15:00', upstream: ['ext:AMI head-end'],
-      rows: memo(() => withCdc(rng, Array.from({ length: 120 }, (_, i) => i), (i) => {
+      rows: memoRng(rng, seed + 702, () => withCdc(rng, Array.from({ length: 120 }, (_, i) => i), (i) => {
         const c = d.customers[i % 10];
         const v = d.usage[(i % 10) * 30 + 29].kwh / 96;
         return { METER_ID: c.meterId, READ_TS: ts(AS_OF, (Math.floor(i / 10) + 1) * 15), KWH_VAL: round(v * rng.range(0.5, 1.6), 3), QUAL_FLG: rng.chance(0.04) ? 'E' : 'V' };
@@ -61,7 +61,7 @@ export function buildCatalog(d: UtilData, seed: number): SfObject[] {
       comment: 'Bill header CDC from DB2 billing',
       columns: [col('BILL_ID', 'VARCHAR(20)', 'Bill id'), col('CUST_NO', 'VARCHAR(10)', 'Customer number'), col('BILL_DT', 'DATE', 'Bill date'), col('AMT_DUE', 'NUMBER(12,2)', 'Amount due'), col('EST_FLG', 'VARCHAR(1)', 'Estimated bill (Y/N)'), col('PAPERLESS_IND', 'VARCHAR(1)', 'Paperless (Y/N)'), ...cdc],
       rowCount: 214_880_316, bytes: 1.9e10, owner: 'INGEST_ADMIN', lastAltered: '2026-09-30 05:58:10', upstream: ['ext:DB2 billing'],
-      rows: memo(() => withCdc(rng, d.bills.filter((b) => b.month === '2026-09').slice(0, 300), (b) => ({
+      rows: memoRng(rng, seed + 703, () => withCdc(rng, d.bills.filter((b) => b.month === '2026-09').slice(0, 300), (b) => ({
         BILL_ID: b.id, CUST_NO: pad(b.customerId, 10), BILL_DT: b.date, AMT_DUE: round(b.billed + b.arrears, 2), EST_FLG: b.estimated ? 'Y' : 'N', PAPERLESS_IND: b.paperless ? 'Y' : 'N',
       }), '2026-09-01')),
     },
@@ -70,7 +70,7 @@ export function buildCatalog(d: UtilData, seed: number): SfObject[] {
       comment: 'Outage events from OMS / ADMS',
       columns: [col('EVT_ID', 'VARCHAR(20)', 'Event id'), col('CKT_ID', 'VARCHAR(12)', 'Circuit id'), col('START_TS', 'TIMESTAMP_NTZ', 'Outage start'), col('END_TS', 'TIMESTAMP_NTZ', 'Restoration'), col('CUST_OUT', 'NUMBER', 'Customers out'), col('CAUSE_CD', 'VARCHAR(6)', 'Cause code'), ...cdc],
       rowCount: 1_904_221, bytes: 2.4e8, owner: 'INGEST_ADMIN', lastAltered: '2026-09-30 06:10:41', upstream: ['ext:OMS / ADMS'],
-      rows: memo(() => withCdc(rng, d.outages.slice(-300).reverse(), (o) => ({
+      rows: memoRng(rng, seed + 704, () => withCdc(rng, d.outages.slice(-300).reverse(), (o) => ({
         EVT_ID: o.id, CKT_ID: o.circuitId, START_TS: ts(o.date, o.startMin), END_TS: ts(addDays(o.date, Math.floor((o.startMin + o.duration) / 1440)), (o.startMin + o.duration) % 1440),
         CUST_OUT: o.ci, CAUSE_CD: { 'Tree contact': 'TREE', 'Equipment failure': 'EQUIP', Animal: 'ANML', 'Weather – wind': 'WIND', Lightning: 'LTNG', 'Vehicle accident': 'VEH', Unknown: 'UNK' }[o.cause] ?? 'UNK',
       }), '2026-09-20')),
@@ -80,7 +80,7 @@ export function buildCatalog(d: UtilData, seed: number): SfObject[] {
       comment: 'Purchase order lines from ERP procurement',
       columns: [col('PO_NO', 'VARCHAR(10)', 'PO number'), col('LINE_NO', 'NUMBER', 'Line'), col('VENDOR_ID', 'VARCHAR(8)', 'Vendor id'), col('MATL_GRP', 'VARCHAR(10)', 'Material group'), col('AMT', 'NUMBER(14,2)', 'Line amount'), col('CONTRACT_REF', 'VARCHAR(12)', 'Outline agreement'), col('PROM_DT', 'DATE', 'Promised date'), col('RCV_DT', 'DATE', 'Goods receipt date'), ...cdc],
       rowCount: 3_412_908, bytes: 4.1e8, owner: 'INGEST_ADMIN', lastAltered: '2026-09-30 04:30:00', upstream: ['ext:ERP procurement'],
-      rows: memo(() => withCdc(rng, d.poLines.slice(-300).reverse(), (l) => ({
+      rows: memoRng(rng, seed + 705, () => withCdc(rng, d.poLines.slice(-300).reverse(), (l) => ({
         PO_NO: l.po, LINE_NO: l.line, VENDOR_ID: `V${pad(10040 + l.supplierKey * 13, 6)}`, MATL_GRP: l.category.slice(0, 4).toUpperCase(), AMT: l.spend,
         CONTRACT_REF: l.onContract ? `OA-${pad(4600 + l.supplierKey * 7, 6)}` : null, PROM_DT: l.promised, RCV_DT: l.received,
       }), '2026-09-15')),
@@ -90,7 +90,7 @@ export function buildCatalog(d: UtilData, seed: number): SfObject[] {
       comment: 'Span inspections from the vegetation management system',
       columns: [col('SPAN_ID', 'VARCHAR(20)', 'Span id'), col('CKT_ID', 'VARCHAR(12)', 'Circuit'), col('INSP_DT', 'DATE', 'Inspection date'), col('CLEARANCE_FT', 'NUMBER(5,1)', 'Measured clearance (ft)'), col('LAST_TRIM_DT', 'DATE', 'Last trim date'), ...cdc],
       rowCount: 412_660, bytes: 3.8e7, owner: 'INGEST_ADMIN', lastAltered: '2026-09-28 18:00:00', upstream: ['ext:Vegetation mgmt system'],
-      rows: memo(() => withCdc(rng, d.spans.slice(0, 200), (s) => ({ SPAN_ID: noisy(rng, s.id), CKT_ID: s.circuitId, INSP_DT: addDays(AS_OF, -((s.id.length * 7) % 90)), CLEARANCE_FT: s.clearanceFt, LAST_TRIM_DT: s.lastTrim }), '2026-07-01')),
+      rows: memoRng(rng, seed + 706, () => withCdc(rng, d.spans.slice(0, 200), (s) => ({ SPAN_ID: noisy(rng, s.id), CKT_ID: s.circuitId, INSP_DT: addDays(AS_OF, -((s.id.length * 7) % 90)), CLEARANCE_FT: s.clearanceFt, LAST_TRIM_DT: s.lastTrim }), '2026-07-01')),
     },
   ];
 

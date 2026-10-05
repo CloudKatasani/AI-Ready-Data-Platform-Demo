@@ -17,6 +17,10 @@ export class Rng {
   constructor(seed: number) {
     this.next = mulberry32(seed);
   }
+  /** Restart the stream from a new seed (used so lazily generated tables do not depend on read order). */
+  reseed(seed: number): void {
+    this.next = mulberry32(seed);
+  }
   float(): number {
     return this.next();
   }

@@ -268,3 +268,18 @@ describe('E11 impact analysis', () => {
     expect(analyzeImpact(pack, live, presets[0]).contracts.every((x) => x.bump === 'minor')).toBe(true);
   });
 });
+
+describe('Bronze sample rows', () => {
+  it('do not depend on which table is read first', async () => {
+    const { buildPack } = await import('../src/packs/utilities');
+    const read = (order: 'asc' | 'desc') => {
+      const p = buildPack();
+      const bronze = p.objects.filter((o) => o.layer === 'bronze' && o.rows);
+      const seq = order === 'asc' ? bronze : [...bronze].reverse();
+      const out: Record<string, number> = {};
+      for (const o of seq) out[o.name] = o.rows!(live).filter((r) => r.OP_TYPE !== 'I').length;
+      return out;
+    };
+    expect(read('desc')).toEqual(read('asc'));
+  });
+});

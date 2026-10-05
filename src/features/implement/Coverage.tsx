@@ -62,7 +62,7 @@ function CoverageInner() {
           <div className="text-xs text-muted">Each table counts once, at its furthest level</div>
         </div>
         <div className="mt-2 flex h-7 overflow-hidden rounded-md border border-line" role="img" aria-label={hist.map((n, i) => `${LEVELS[i].name}: ${n}`).join(', ')}>
-          {hist.map((n, i) => n > 0 && <div key={i} className="grid place-items-center text-[11px] font-semibold" style={{ width: `${(n / rows.length) * 100}%`, background: shade(i), color: i >= 4 ? 'white' : undefined }} title={`${LEVELS[i].name}: ${n}`}>{n}</div>)}
+          {hist.map((n, i) => n > 0 && <div key={i} className="grid place-items-center text-[11px] font-semibold" style={{ width: `${(n / rows.length) * 100}%`, background: shade(i) }} title={`${LEVELS[i].name}: ${n}`}><span className="rounded bg-surface/90 px-1 text-ink">{n}</span></div>)}
         </div>
         <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
           {LEVELS.map((l) => <span key={l.n} className="inline-flex items-center gap-1"><span className="h-3 w-3 rounded-sm border border-line" style={{ background: shade(l.n) }} />{l.n} {l.name} <span className="tabnum text-muted">{hist[l.n]} ({Math.round((hist[l.n] / rows.length) * 100)}%)</span></span>)}
@@ -96,9 +96,9 @@ function CoverageInner() {
                         const frac = reached.length / g.rows.length;
                         return (
                           <td key={l.n} className="p-0.5">
-                            <button className="h-8 w-full rounded text-xs font-semibold tabnum" style={{ background: frac ? `rgb(var(--accent) / ${0.1 + frac * 0.75})` : 'rgb(var(--surface2))', color: frac > 0.55 ? 'white' : undefined }}
+                            <button className="h-8 w-full rounded text-xs font-semibold tabnum" style={{ background: frac ? `rgb(var(--accent) / ${0.1 + frac * 0.75})` : 'rgb(var(--surface2))' }}
                               onClick={() => setCell({ title: `${g.name} · ${l.name}`, rows: g.rows.filter((r) => r.levelNow === l.n), level: l.n })}
-                              aria-label={`${g.name}: ${reached.length} of ${g.rows.length} tables reached ${l.name}`}>{reached.length || ''}</button>
+                              aria-label={`${g.name}: ${reached.length} of ${g.rows.length} tables reached ${l.name}`}>{reached.length ? <span className="rounded bg-surface/90 px-1.5 text-ink">{reached.length}</span> : ''}</button>
                           </td>
                         );
                       })}

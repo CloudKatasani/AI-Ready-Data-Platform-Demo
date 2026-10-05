@@ -1,6 +1,6 @@
 // Bronze / Silver / Gold objects and product output ports for RLB_AI_PLATFORM (spec section 5).
 import type { Row, SfObject } from '../../types';
-import { cdcColumns, col, dateKey, GATE6_CHECK, memo, withCdc } from '../shared/catalog-kit';
+import { cdcColumns, col, dateKey, GATE6_CHECK, memo, memoRng, withCdc } from '../shared/catalog-kit';
 import { Rng } from '../../mock-snowflake/rng';
 import { addDays, noisy, round, ts } from '../../mock-snowflake/generators';
 import type { BankData } from './data';
@@ -40,7 +40,7 @@ export function buildCatalog(d: BankData, seed: number): SfObject[] {
       ],
       rowCount: 61_408_212, bytes: 8.4e9, owner: 'INGEST_ADMIN', lastAltered: '2026-09-30 05:52:18', upstream: ['ext:Core banking'],
       rowAccess: regionCodeAccess('REGION_CD'),
-      rows: memo(() => withCdc(rng, custSample, (c) => ({
+      rows: memoRng(rng, seed + 701, () => withCdc(rng, custSample, (c) => ({
         CIF_NO: rng.chance(0.3) ? `${c.cifNo}  ` : c.cifNo, FIRST_NM: noisy(rng, c.first), LAST_NM: noisy(rng, c.last),
         EMAIL_ADDR: rng.chance(0.3) ? c.email.toUpperCase() : c.email, TAX_ID: rng.chance(0.25) ? c.taxId.replace(/-/g, '') : c.taxId, PHONE_NO: c.phone,
         BRANCH_CD: c.branchCode, REGION_CD: rng.chance(0.2) ? `${c.regionCode.toLowerCase()} ` : c.regionCode, SEG_CD: SEG_CODE[c.segment],
@@ -61,7 +61,7 @@ export function buildCatalog(d: BankData, seed: number): SfObject[] {
         col('INT_RATE', 'NUMBER(7,4)', 'Interest rate %'), col('DPD_CNT', 'NUMBER(4)', 'Days past due (loans)'), col('NONACCR_FLG', 'VARCHAR(1)', 'Non-accrual flag (Y/N)'), ...cdc,
       ],
       rowCount: 412_660_118, bytes: 3.9e10, owner: 'INGEST_ADMIN', lastAltered: '2026-09-30 05:40:02', upstream: ['ext:Core banking'],
-      rows: memo(() => {
+      rows: memoRng(rng, seed + 799, () => {
         const dep = sepDeposits().slice(0, 200).map((x) => ({ kind: 'DEP' as const, x }));
         const ln = sepLoans().slice(0, 200).map((x) => ({ kind: 'LN' as const, x }));
         const items = dep.flatMap((a, i) => [a, ...(ln[i] ? [ln[i]] : [])]);
@@ -84,7 +84,7 @@ export function buildCatalog(d: BankData, seed: number): SfObject[] {
         col('AUTH_TS', 'TIMESTAMP_NTZ', 'Authorisation time'), col('FRAUD_FLG', 'VARCHAR(1)', 'Confirmed fraud (Y/N)'), ...cdc,
       ],
       rowCount: 2_914_406_550, bytes: 2.6e11, owner: 'INGEST_ADMIN', lastAltered: '2026-09-30 06:11:47', upstream: ['ext:Card processing'],
-      rows: memo(() => withCdc(rng, d.cardTxns.slice(-300).reverse(), (t) => ({
+      rows: memoRng(rng, seed + 702, () => withCdc(rng, d.cardTxns.slice(-300).reverse(), (t) => ({
         AUTH_ID: t.id, PAN: cardByKey.get(t.cardKey)!.pan, MCC_GRP: noisy(rng, t.category), AUTH_AMT: t.amount, RESP_CD: t.approved ? '00' : rng.pick(['05', '51', '59']),
         POS_ENTRY: t.channel === 'E-commerce' ? 'ECOM' : t.channel === 'Contactless' ? 'NFC' : 'CHIP', AUTH_TS: ts(t.date, t.minute), FRAUD_FLG: t.fraud ? 'Y' : 'N',
       }), '2026-09-25')),
@@ -98,7 +98,7 @@ export function buildCatalog(d: BankData, seed: number): SfObject[] {
         col('IP_ADDR', 'VARCHAR(15)', 'Client IP address', { tags: ['PII'] }), ...cdc,
       ],
       rowCount: 1_208_551_904, bytes: 9.1e10, owner: 'INGEST_ADMIN', lastAltered: '2026-09-30 06:14:09', upstream: ['ext:Digital banking events'],
-      rows: memo(() => withCdc(rng, d.sessions.slice(-300).reverse(), (s) => ({
+      rows: memoRng(rng, seed + 703, () => withCdc(rng, d.sessions.slice(-300).reverse(), (s) => ({
         EVENT_ID: s.id, CIF_NO: custByKey.get(s.customerKey)!.cifNo, CHANNEL: s.channel === 'Mobile app' ? 'APP' : 'WEB', EVENT_TYPE: noisy(rng, s.eventType.toUpperCase().replace(/ /g, '_')),
         EVENT_TS: ts(s.date, s.minute), DEVICE_ID: s.deviceId, IP_ADDR: `10.${(s.customerKey * 7) % 255}.${(s.key * 3) % 255}.${(s.key * 11) % 250}`,
       }), '2026-09-28')),
@@ -112,7 +112,7 @@ export function buildCatalog(d: BankData, seed: number): SfObject[] {
         col('DISP_CD', 'VARCHAR(4)', 'Disposition (OPEN, CLNA, ESC)'), col('CASE_ID', 'VARCHAR(12)', 'Case id if escalated'), ...cdc,
       ],
       rowCount: 1_904_377, bytes: 3.1e8, owner: 'INGEST_ADMIN', lastAltered: '2026-09-30 04:58:31', upstream: ['ext:AML case management'],
-      rows: memo(() => withCdc(rng, d.alerts.slice(-300).reverse(), (a) => ({
+      rows: memoRng(rng, seed + 704, () => withCdc(rng, d.alerts.slice(-300).reverse(), (a) => ({
         ALERT_ID: a.id, CIF_NO: custByKey.get(a.customerKey)!.cifNo, ACCT_NO: a.acctNo, SCENARIO_CD: a.scenarioCode, RISK_SCORE: a.score, ALERT_DT: a.date,
         DISP_CD: a.disposition === 'Open' ? 'OPEN' : a.disposition === 'Escalated to case' ? 'ESC' : 'CLNA', CASE_ID: a.caseId ?? null,
       }), '2026-09-10')),
@@ -126,7 +126,7 @@ export function buildCatalog(d: BankData, seed: number): SfObject[] {
       ],
       rowCount: 18_406_115, bytes: 1.2e9, owner: 'INGEST_ADMIN', lastAltered: '2026-09-30 03:15:00', upstream: ['ext:General ledger'],
       rowAccess: regionCodeAccess('COST_CTR'),
-      rows: memo(() => withCdc(rng, d.gl.slice().reverse(), (g) => ({ GL_ACCT: g.glAccount, COST_CTR: regionCode(g.region), PERIOD: g.month.replace('-', ''), AMT: g.amount, CCY: 'USD' }), '2026-09-01')),
+      rows: memoRng(rng, seed + 705, () => withCdc(rng, d.gl.slice().reverse(), (g) => ({ GL_ACCT: g.glAccount, COST_CTR: regionCode(g.region), PERIOD: g.month.replace('-', ''), AMT: g.amount, CCY: 'USD' }), '2026-09-01')),
     },
   ];
 

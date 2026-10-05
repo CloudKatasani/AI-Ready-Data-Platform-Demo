@@ -1,6 +1,6 @@
 // Bronze / Silver / Gold objects and product output ports for SMI_AI_PLATFORM (spec section 5).
 import type { SfObject } from '../../types';
-import { cdcColumns, col, dateKey, GATE6_CHECK, memo, withCdc } from '../shared/catalog-kit';
+import { cdcColumns, col, dateKey, GATE6_CHECK, memo, memoRng, withCdc } from '../shared/catalog-kit';
 import { Rng } from '../../mock-snowflake/rng';
 import { addDays, daysBetween, noisy, pad, round, ts } from '../../mock-snowflake/generators';
 import { inForceOn, type InsData } from './data';
@@ -41,7 +41,7 @@ export function buildCatalog(d: InsData, seed: number): SfObject[] {
       ],
       rowCount: 61_402_118, bytes: 8.4e9, owner: 'INGEST_ADMIN', lastAltered: '2026-09-30 06:12:40', upstream: ['ext:Policy administration'],
       rowAccess: stateAccess('RISK_ST'),
-      rows: memo(() => withCdc(rng, polSample, (p) => ({
+      rows: memoRng(rng, seed + 701, () => withCdc(rng, polSample, (p) => ({
         POLICY_NO: rng.chance(0.3) ? `${p.policyNo}  ` : p.policyNo, PH_FIRST_NM: noisy(rng, p.first), PH_LAST_NM: noisy(rng, p.last),
         EMAIL_ADDR: rng.chance(0.3) ? p.email.toUpperCase() : p.email, BIRTH_DT: p.dob, ADDR_LN1: noisy(rng, p.street.toUpperCase()), RISK_CITY: noisy(rng, p.city),
         RISK_ST: p.state, LOB_CD: rng.chance(0.25) ? p.line.toLowerCase() : p.line, ANNUAL_PREM: p.premium, EFF_DT: p.termStart, STAT_CD: STATUS_CD[p.status],
@@ -61,7 +61,7 @@ export function buildCatalog(d: InsData, seed: number): SfObject[] {
       ],
       rowCount: 9_840_312, bytes: 2.6e9, owner: 'INGEST_ADMIN', lastAltered: '2026-09-30 06:05:12', upstream: ['ext:Claims'],
       rowAccess: stateAccess('LOSS_ST'),
-      rows: memo(() => withCdc(rng, d.claims.slice(-300).reverse(), (c) => ({
+      rows: memoRng(rng, seed + 702, () => withCdc(rng, d.claims.slice(-300).reverse(), (c) => ({
         CLAIM_NO: c.claimNo, POLICY_NO: polByKey.get(c.policyKey)!.policyNo, LOSS_DT: c.lossDate, RPT_DT: c.reportDate, LOSS_ST: c.state, LOB_CD: c.line,
         CAUSE_DESC: noisy(rng, c.cause), CLMNT_FIRST_NM: noisy(rng, c.claimantFirst), CLMNT_LAST_NM: noisy(rng, c.claimantLast), CLMNT_BIRTH_DT: c.claimantDob,
         INJURY_DESC: c.injury, CAT_CD: c.catCode ?? '', RESERVE_AMT: c.reserve, PAID_AMT: c.paid, STAT_CD: c.status[0],
@@ -76,7 +76,7 @@ export function buildCatalog(d: InsData, seed: number): SfObject[] {
         col('DAYS_PAST_DUE', 'NUMBER(4)', 'Days past due at month end'), ...cdc,
       ],
       rowCount: 312_448_905, bytes: 2.2e10, owner: 'INGEST_ADMIN', lastAltered: '2026-09-30 05:41:03', upstream: ['ext:Billing'],
-      rows: memo(() => withCdc(rng, d.premiums.filter((p) => p.month === '2026-09' && p.billed > 0).slice(0, 300), (p) => ({
+      rows: memoRng(rng, seed + 703, () => withCdc(rng, d.premiums.filter((p) => p.month === '2026-09' && p.billed > 0).slice(0, 300), (p) => ({
         INVOICE_NO: `INV-${p.month.replace('-', '')}-${pad(p.policyKey, 6)}`, POLICY_NO: polByKey.get(p.policyKey)!.policyNo, BILL_DT: `${p.month}-01`, DUE_DT: `${p.month}-21`,
         AMT_BILLED: p.billed, PAY_PLAN_CD: polByKey.get(p.policyKey)!.payPlan[0], DAYS_PAST_DUE: p.daysPastDue,
       }), '2026-09-01')),
@@ -92,7 +92,7 @@ export function buildCatalog(d: InsData, seed: number): SfObject[] {
       ],
       rowCount: 14_203_377, bytes: 1.9e9, owner: 'INGEST_ADMIN', lastAltered: '2026-09-30 06:00:31', upstream: ['ext:Agent & broker portal'],
       rowAccess: stateAccess('RISK_ST'),
-      rows: memo(() => withCdc(rng, d.submissions.slice(-300).reverse(), (s) => ({
+      rows: memoRng(rng, seed + 704, () => withCdc(rng, d.submissions.slice(-300).reverse(), (s) => ({
         SUBMISSION_ID: s.id, AGENCY_CD: agencyByKey.get(s.agencyKey)!.id, AGENCY_NM: noisy(rng, agencyByKey.get(s.agencyKey)!.name), LOB_CD: s.line, RISK_ST: s.state,
         RCVD_TS: ts(s.received, 480 + (s.key % 500)), QUOTE_TS: s.quoteDate ? ts(s.quoteDate, 540 + (s.key % 400)) : null, QUOTED_PREM: s.status === 'Declined' ? null : s.premium,
         BIND_IND: s.boundDate ? 'Y' : 'N', SUB_TYPE_CD: { 'New business': 'NB', Rewrite: 'RW', Reinstatement: 'RI' }[s.type],
@@ -106,7 +106,7 @@ export function buildCatalog(d: InsData, seed: number): SfObject[] {
         col('START_DT', 'DATE', 'Event start'), col('END_DT', 'DATE', 'Event end'), col('AFFECTED_ST', 'VARCHAR(40)', 'Affected states (comma separated)'), ...cdc,
       ],
       rowCount: 1_204, bytes: 3.1e5, owner: 'INGEST_ADMIN', lastAltered: '2026-09-29 22:00:00', upstream: ['ext:Catastrophe feeds'],
-      rows: memo(() => withCdc(rng, [...CAT_EVENTS].reverse(), (e) => ({
+      rows: memoRng(rng, seed + 705, () => withCdc(rng, [...CAT_EVENTS].reverse(), (e) => ({
         CAT_CD: e.code, EVENT_NM: noisy(rng, e.name), PERIL_CD: { Hurricane: 'HU', Wildfire: 'WF', 'Severe convective': 'SCS', 'Winter storm': 'WS' }[e.peril] ?? 'OT',
         START_DT: e.start, END_DT: e.end, AFFECTED_ST: e.states.join(','),
       }), '2025-02-15')),

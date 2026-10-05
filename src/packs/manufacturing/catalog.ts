@@ -1,6 +1,6 @@
 // Bronze / Silver / Gold objects and product output ports for FPI_AI_PLATFORM (spec section 5).
 import type { SfObject } from '../../types';
-import { cdcColumns, col, dateKey, GATE6_CHECK, memo, withCdc } from '../shared/catalog-kit';
+import { cdcColumns, col, dateKey, GATE6_CHECK, memo, memoRng, withCdc } from '../shared/catalog-kit';
 import { Rng } from '../../mock-snowflake/rng';
 import { addDays, dateRange, noisy, pad, round, ts } from '../../mock-snowflake/generators';
 import type { MfgData } from './data';
@@ -37,7 +37,7 @@ export function buildCatalog(d: MfgData, seed: number): SfObject[] {
       ],
       rowCount: 1_912_406, bytes: 2.4e8, owner: 'INGEST_ADMIN', lastAltered: '2026-09-30 05:48:10', upstream: ['ext:MES'],
       rowAccess: buCodeAccess('BU_CD'),
-      rows: memo(() => withCdc(rng, opSample, (o) => ({
+      rows: memoRng(rng, seed + 701, () => withCdc(rng, opSample, (o) => ({
         BADGE_NO: rng.chance(0.3) ? `${o.id} ` : o.id, FIRST_NM: noisy(rng, o.first), LAST_NM: noisy(rng, o.last),
         EMAIL_ADDR: rng.chance(0.3) ? o.email.toUpperCase() : o.email, PLANT_CD: o.plantCode, BU_CD: o.buCode, LINE_CD: noisy(rng, o.lineId),
         JOB_ROLE: noisy(rng, o.role), CERT_LVL: o.certLevel, EMP_STAT: o.status[0],
@@ -59,7 +59,7 @@ export function buildCatalog(d: MfgData, seed: number): SfObject[] {
         col('LEAD_BADGE', 'VARCHAR(8)', 'Shift lead badge'), ...cdc,
       ],
       rowCount: 4_820_114, bytes: 6.3e8, owner: 'INGEST_ADMIN', lastAltered: '2026-09-30 06:02:31', upstream: ['ext:MES'],
-      rows: memo(() => withCdc(rng, recentProd(), (p) => ({
+      rows: memoRng(rng, seed + 702, () => withCdc(rng, recentProd(), (p) => ({
         EVT_ID: `EV${p.date.replace(/-/g, '')}${pad(p.lineKey, 3)}${p.shift}`, LINE_CD: p.lineId, SHIFT_DT: p.date, SHIFT_NO: p.shift, PLAN_MIN: 480,
         PLAN_DOWN_MIN: p.plannedDownMin, DOWN_MIN: p.unplannedMin, DOWN_RSN_CD: { Breakdown: 'BRKDN', 'Material shortage': 'MATL', 'Changeover overrun': 'CHGOV', 'Quality hold': 'QHOLD', 'Operator unavailable': 'OPUNV' }[p.topReason] ?? 'OTH',
         TOTAL_CNT: p.total, SCRAP_CNT: p.scrap, REWORK_CNT: p.rework, LEAD_BADGE: opByKey.get(p.leadKey)!.id,
@@ -76,7 +76,7 @@ export function buildCatalog(d: MfgData, seed: number): SfObject[] {
       ],
       rowCount: 2_406_880, bytes: 3.9e8, owner: 'INGEST_ADMIN', lastAltered: '2026-09-30 04:41:09', upstream: ['ext:ERP (orders, BOM)'],
       rowAccess: buCodeAccess('BU_CD'),
-      rows: memo(() => withCdc(rng, d.orders.slice(-300).reverse(), (o) => ({
+      rows: memoRng(rng, seed + 703, () => withCdc(rng, d.orders.slice(-300).reverse(), (o) => ({
         VBELN: o.orderNo.replace('SO-', '00'), POSNR: o.lineNo, KUNNR: d.customers[o.customerKey - 1].id, CONTACT_EMAIL: rng.chance(0.3) ? o.contactEmail.toUpperCase() : o.contactEmail,
         BU_CD: BU_CODE[o.bu], MATKL: noisy(rng, o.family), KWMENG: o.qty, NETWR: o.value, STD_COST: o.unitCost, EDATU: o.promised,
       }), '2026-09-20', (o) => o.bu === 'Motion Systems' || o.bu === 'Fluid Power')),
@@ -90,7 +90,7 @@ export function buildCatalog(d: MfgData, seed: number): SfObject[] {
         col('LOAD_PCT', 'NUMBER(5,1)', 'Spindle or motor load %'), col('POWER_KW', 'NUMBER(7,2)', 'Metered power kW'), col('QUALITY', 'VARCHAR(4)', 'OPC quality (GOOD, UNCR, BAD)'), ...cdc,
       ],
       rowCount: 38_416_220_904, bytes: 2.1e12, owner: 'INGEST_ADMIN', lastAltered: '2026-09-30 06:15:00', upstream: ['ext:IoT sensor historian'],
-      rows: memo(() => withCdc(rng, Array.from({ length: 160 }, (_, i) => i), (i) => {
+      rows: memoRng(rng, seed + 704, () => withCdc(rng, Array.from({ length: 160 }, (_, i) => i), (i) => {
         const a = d.assets[(i * 7) % d.assets.length];
         const l = lineByKey.get(a.lineKey)!;
         return {
@@ -108,7 +108,7 @@ export function buildCatalog(d: MfgData, seed: number): SfObject[] {
         col('NCR_NO', 'VARCHAR(14)', 'Nonconformance report'), col('OPERATOR_BADGE', 'VARCHAR(8)', 'Badge of the producing shift lead'), ...cdc,
       ],
       rowCount: 1_288_450, bytes: 1.4e8, owner: 'INGEST_ADMIN', lastAltered: '2026-09-30 05:22:40', upstream: ['ext:QMS'],
-      rows: memo(() => withCdc(rng, d.lots.slice(-300).reverse(), (l) => ({
+      rows: memoRng(rng, seed + 705, () => withCdc(rng, d.lots.slice(-300).reverse(), (l) => ({
         INSP_LOT: l.lotId, LINE_CD: l.lineId, INSP_DT: l.date, SAMPLE_QTY: l.inspected, DEFECT_QTY: l.defects, DEFECT_CD: l.defectCode ? noisy(rng, l.defectCode) : null,
         USAGE_DECISION: l.disposition[0].replace('a', 'A'), NCR_NO: l.ncr, OPERATOR_BADGE: opByKey.get(l.operatorKey)!.id,
       }), '2026-09-25')),
@@ -122,7 +122,7 @@ export function buildCatalog(d: MfgData, seed: number): SfObject[] {
         col('QTY_RCVD', 'NUMBER(8)', 'Quantity received'), col('QTY_REJ', 'NUMBER(6)', 'Quantity rejected at incoming inspection'), ...cdc,
       ],
       rowCount: 812_604, bytes: 6.1e7, owner: 'INGEST_ADMIN', lastAltered: '2026-09-30 03:30:00', upstream: ['ext:Supplier portal'],
-      rows: memo(() => withCdc(rng, d.receipts.slice(-300).reverse(), (r) => ({
+      rows: memoRng(rng, seed + 706, () => withCdc(rng, d.receipts.slice(-300).reverse(), (r) => ({
         ASN_NO: r.asn, VENDOR_ID: supplierByKey.get(r.supplierKey)!.id, PLANT_CD: noisy(rng, r.plantCode), PO_DT: r.poDate, PROMISED_DT: r.promised, RECEIPT_DT: r.received, QTY_RCVD: r.qty, QTY_REJ: r.rejected,
       }), '2026-09-18')),
     },

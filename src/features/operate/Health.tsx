@@ -147,8 +147,10 @@ function Overview() {
                   <div className="flex flex-wrap items-center gap-0.5" aria-label={`Lineage of ${p.name}`}>
                     {strip.map((s, k) => (
                       <span key={s.id} className="inline-flex items-center">
-                        {k > 0 && <Icon name="chevronRight" size={10} className="text-muted" />}
-                        <Link to={path(`explorer/${s.id.replace('.', '/')}`)} title={s.id} className={cls('h-3 w-5 rounded-sm', failing.has(s.id) && 'animate-pulse ring-2 ring-bad')} style={{ background: layerColor(s.layer, failing.has(s.id) ? 1 : 0.55) }} aria-label={`${s.id}${failing.has(s.id) ? ' (source of the problem)' : ''}`} />
+                        {k > 0 && <Icon name="chevronRight" size={10} className="-mx-1 text-muted" />}
+                        <Link to={path(`explorer/${s.id.replace('.', '/')}`)} title={s.id} className="inline-grid h-6 w-6 place-items-center rounded hover:bg-surface2" aria-label={`${s.id}${failing.has(s.id) ? ' (source of the problem)' : ''}`}>
+                          <span className={cls('h-3 w-5 rounded-sm', failing.has(s.id) && 'animate-pulse ring-2 ring-bad')} style={{ background: layerColor(s.layer, failing.has(s.id) ? 1 : 0.55) }} />
+                        </Link>
                       </span>
                     ))}
                   </div>

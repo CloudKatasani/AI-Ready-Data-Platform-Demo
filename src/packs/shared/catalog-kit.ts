@@ -20,6 +20,18 @@ export const memo = <T,>(f: () => T) => {
   return () => (v ??= f());
 };
 
+/**
+ * Like `memo`, for row generators that draw from a shared Rng: the stream is reseeded with `seed` before the first
+ * computation, so each table's rows are identical whichever table is previewed first.
+ */
+export const memoRng = <T,>(rng: Rng, seed: number, f: () => T) => {
+  let v: T | undefined;
+  return () => {
+    if (v === undefined) { rng.reseed(seed); v = f(); }
+    return v;
+  };
+};
+
 export const dateKey = (d: string) => Number(d.replace(/-/g, ''));
 
 export const cdcColumns = (): Column[] => [

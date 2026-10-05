@@ -92,11 +92,11 @@ function CompareInner() {
             <div className="mt-1 text-xs text-muted">{raw.caption}</div>
           </div>
           <div className="mt-3">
-            <div className="label mb-1 flex items-center gap-2">Rows it read {exposedForMe && <span className="chip border-bad/50 bg-bad/10 text-bad"><Icon name="warn" size={11} />Exposed</span>}</div>
+            <div className="label mb-1 flex items-center gap-2">Rows it read {exposedForMe && <span className="chip border-bad/60 bg-bad/10 text-ink"><Icon name="warn" size={11} className="text-bad" />Exposed</span>}</div>
             <div tabIndex={0} role="region" aria-label="Rows read" className="overflow-x-auto rounded-md border border-line scroll-thin">
               <table className="min-w-full text-xs">
-                <thead className="bg-surface2"><tr>{raw.rowsRead.columns.map((c, i) => <th key={c} scope="col" className={cls('whitespace-nowrap px-2 py-1 text-left font-mono font-medium', raw.rowsRead.exposed.includes(i) && 'text-bad')}>{c}</th>)}</tr></thead>
-                <tbody>{raw.rowsRead.rows.map((r, i) => <tr key={i} className="border-t border-line/70">{r.map((v, j) => <td key={j} className={cls('whitespace-pre px-2 py-1 font-mono', raw.rowsRead.exposed.includes(j) && 'bg-bad/10 text-bad')}>{String(v)}</td>)}</tr>)}</tbody>
+                <thead className="bg-surface2"><tr>{raw.rowsRead.columns.map((c, i) => <th key={c} scope="col" className={cls('whitespace-nowrap px-2 py-1 text-left font-mono font-medium', raw.rowsRead.exposed.includes(i) && 'underline decoration-bad decoration-2 underline-offset-2')}>{c}</th>)}</tr></thead>
+                <tbody>{raw.rowsRead.rows.map((r, i) => <tr key={i} className="border-t border-line/70">{r.map((v, j) => <td key={j} className={cls('whitespace-pre px-2 py-1 font-mono', raw.rowsRead.exposed.includes(j) && 'bg-bad/10 font-semibold text-ink')}>{String(v)}</td>)}</tr>)}</tbody>
               </table>
             </div>
           </div>

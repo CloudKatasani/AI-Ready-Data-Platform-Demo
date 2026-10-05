@@ -1,6 +1,6 @@
 // Bronze / Silver / Gold objects and product output ports for ALT_AI_PLATFORM (spec section 5).
 import type { SfObject } from '../../types';
-import { cdcColumns, col, dateKey, GATE6_CHECK, memo, withCdc } from '../shared/catalog-kit';
+import { cdcColumns, col, dateKey, GATE6_CHECK, memo, memoRng, withCdc } from '../shared/catalog-kit';
 import { Rng } from '../../mock-snowflake/rng';
 import { addDays, dateRange, noisy, pad, round, ts } from '../../mock-snowflake/generators';
 import { MONTHS, type TelData } from './data';
@@ -55,7 +55,7 @@ export function buildCatalog(d: TelData, seed: number): SfObject[] {
       ],
       rowCount: 61_408_225, bytes: 7.4e9, owner: 'INGEST_ADMIN', lastAltered: '2026-09-30 06:12:41', upstream: ['ext:CRM'],
       rowAccess: marketAccess('MKT_CD'),
-      rows: memo(() => withCdc(rng, subSample, (s) => ({
+      rows: memoRng(rng, seed + 701, () => withCdc(rng, subSample, (s) => ({
         SUB_ID: rng.chance(0.3) ? `${s.id}  ` : s.id, ACCT_NO: s.accountNo, FIRST_NM: noisy(rng, s.first), LAST_NM: noisy(rng, s.last),
         EMAIL_ADDR: rng.chance(0.3) ? s.email.toUpperCase() : s.email, MSISDN: s.msisdn, MKT_CD: s.marketCode,
         PLAN_CD: rng.chance(0.25) ? s.planCode.toLowerCase() : s.planCode, STATUS_CD: s.status === 'Active' ? 'AC' : 'DX', ACTIVATION_DT: s.activationDate,
@@ -76,7 +76,7 @@ export function buildCatalog(d: TelData, seed: number): SfObject[] {
       ],
       rowCount: 318_552_904, bytes: 2.6e10, owner: 'INGEST_ADMIN', lastAltered: '2026-09-30 05:51:18', upstream: ['ext:BSS billing'],
       rowAccess: marketAccess('MKT_CD'),
-      rows: memo(() => withCdc(rng, sepInvoices().slice(0, 300), (v) => ({
+      rows: memoRng(rng, seed + 702, () => withCdc(rng, sepInvoices().slice(0, 300), (v) => ({
         INVOICE_NO: v.id, ACCT_NO: subByKey.get(v.subKey)!.accountNo, BILL_DT: v.date, RATED_AMT: v.rated, BILLED_AMT: v.billed,
         ROAM_AMT: v.roaming, DEVICE_AMT: v.deviceRevenue, MKT_CD: v.marketCode,
       }), '2026-09-01')),
@@ -90,7 +90,7 @@ export function buildCatalog(d: TelData, seed: number): SfObject[] {
         col('CELL_ID', 'VARCHAR(10)', 'Serving cell site'), col('ROAMING_FLG', 'VARCHAR(1)', 'Roaming (Y/N)'), col('CALL_RESULT', 'VARCHAR(8)', 'NORMAL / DROPPED'), ...cdc,
       ],
       rowCount: 214_806_331_920, bytes: 9.1e12, owner: 'INGEST_ADMIN', lastAltered: '2026-09-30 06:15:00', upstream: ['ext:CDR mediation'],
-      rows: memo(() => withCdc(rng, cdrs(), (c) => ({
+      rows: memoRng(rng, seed + 703, () => withCdc(rng, cdrs(), (c) => ({
         CDR_ID: c.id, MSISDN: c.msisdn, EVENT_TS: c.ts, EVENT_TYPE: c.type, DURATION_SEC: c.dur, VOLUME_MB: c.mb, CELL_ID: c.site,
         ROAMING_FLG: c.roaming ? 'Y' : 'N', CALL_RESULT: c.dropped ? 'DROPPED' : 'NORMAL',
       }), AS_OF)),
@@ -103,7 +103,7 @@ export function buildCatalog(d: TelData, seed: number): SfObject[] {
         col('SEVERITY', 'VARCHAR(10)', 'Critical / Major / Minor'), col('CLEARED_TS', 'TIMESTAMP_NTZ', 'Cleared at'), ...cdc,
       ],
       rowCount: 48_117_602, bytes: 5.2e9, owner: 'INGEST_ADMIN', lastAltered: '2026-09-30 06:14:07', upstream: ['ext:OSS network events'],
-      rows: memo(() => withCdc(rng, d.network.filter((n) => n.alarm).slice(-300).reverse(), (n) => {
+      rows: memoRng(rng, seed + 704, () => withCdc(rng, d.network.filter((n) => n.alarm).slice(-300).reverse(), (n) => {
         const start = 60 + ((n.siteKey * 97) % 1200);
         return { EVT_ID: `ALM-${n.date.replace(/-/g, '')}-${pad(n.siteKey, 4)}`, SITE_ID: noisy(rng, n.siteId), EVT_TS: ts(n.date, start), ALARM_CD: n.alarm, SEVERITY: severity[n.alarm!] ?? 'Minor', CLEARED_TS: ts(n.date, Math.min(1439, start + Math.max(4, n.downtimeMin))) };
       }, '2026-09-20')),
@@ -118,7 +118,7 @@ export function buildCatalog(d: TelData, seed: number): SfObject[] {
       ],
       rowCount: 4_906_118, bytes: 6.3e8, owner: 'INGEST_ADMIN', lastAltered: '2026-09-30 05:40:00', upstream: ['ext:Field service'],
       rowAccess: marketAccess('MKT_CD'),
-      rows: memo(() => withCdc(rng, d.workOrders.slice(-300).reverse(), (w) => {
+      rows: memoRng(rng, seed + 705, () => withCdc(rng, d.workOrders.slice(-300).reverse(), (w) => {
         const open = 420 + ((w.key * 53) % 600);
         return {
           WO_ID: w.id, WO_TYPE: noisy(rng, w.type), SITE_ID: w.siteId, ACCT_NO: w.subKey ? subByKey.get(w.subKey)!.accountNo : null, MKT_CD: w.marketCode,

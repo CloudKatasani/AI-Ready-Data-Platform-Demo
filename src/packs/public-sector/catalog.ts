@@ -1,6 +1,6 @@
 // Bronze / Silver / Gold objects and product output ports for WCS_AI_PLATFORM (spec section 5).
 import type { SfObject } from '../../types';
-import { cdcColumns, col, dateKey, GATE6_CHECK, memo, withCdc } from '../shared/catalog-kit';
+import { cdcColumns, col, dateKey, GATE6_CHECK, memo, memoRng, withCdc } from '../shared/catalog-kit';
 import { Rng } from '../../mock-snowflake/rng';
 import { addDays, dateRange, noisy, pad, round, ts } from '../../mock-snowflake/generators';
 import { isBusinessDay, type PsData } from './data';
@@ -36,7 +36,7 @@ export function buildCatalog(d: PsData, seed: number): SfObject[] {
       ],
       rowCount: 9_418_552, bytes: 1.4e9, owner: 'INGEST_ADMIN', lastAltered: '2026-09-30 05:48:12', upstream: ['ext:Case management'],
       rowAccess: codeAccess('DIST_CD'),
-      rows: memo(() => withCdc(rng, sample, (c) => ({
+      rows: memoRng(rng, seed + 701, () => withCdc(rng, sample, (c) => ({
         PERSON_ID: rng.chance(0.3) ? `${c.constituentId}  ` : c.constituentId, FIRST_NM: noisy(rng, c.first), LAST_NM: noisy(rng, c.last), SSN_NO: c.govId,
         EMAIL_ADDR: rng.chance(0.3) ? c.email.toUpperCase() : c.email, ADDR_LN1: noisy(rng, c.street.toUpperCase()), CITY: noisy(rng, c.city),
         DIST_CD: rng.chance(0.2) ? c.districtCode.toLowerCase() : c.districtCode, STAT_CD: c.status === 'Active' ? 'A' : 'I',
@@ -53,7 +53,7 @@ export function buildCatalog(d: PsData, seed: number): SfObject[] {
       columns: [col('CASE_NO', 'VARCHAR(20)', 'Case number'), col('PERSON_ID', 'VARCHAR(12)', 'Person id'), col('PGM_CD', 'VARCHAR(4)', 'Program code'), col('OFC_CD', 'VARCHAR(5)', 'Office code'), col('DIST_CD', 'VARCHAR(2)', 'Service district code'), col('WORKER_ID', 'VARCHAR(14)', 'Assigned caseworker'), col('OPEN_DT', 'DATE', 'Case opened'), col('CLOSE_DT', 'DATE', 'Case closed'), col('CASE_STAT', 'VARCHAR(2)', 'OP open, CL closed'), col('PEND_ACTN', 'VARCHAR(4)', 'Pending action (APP, REN, CHG)'), ...cdc],
       rowCount: 3_120_408, bytes: 3.9e8, owner: 'INGEST_ADMIN', lastAltered: '2026-09-30 05:51:30', upstream: ['ext:Case management'],
       rowAccess: codeAccess('DIST_CD'),
-      rows: memo(() => withCdc(rng, d.cases.slice(0, 300), (x) => ({
+      rows: memoRng(rng, seed + 702, () => withCdc(rng, d.cases.slice(0, 300), (x) => ({
         CASE_NO: x.caseId, PERSON_ID: consByKey.get(x.constituentKey)!.constituentId, PGM_CD: x.program, OFC_CD: officeByKey.get(x.officeKey)!.code, DIST_CD: codeOf(x.district),
         WORKER_ID: x.caseworkerId, OPEN_DT: x.opened, CLOSE_DT: x.closed, CASE_STAT: x.status === 'Open' ? 'OP' : 'CL',
         PEND_ACTN: { NONE: null, APPLICATION: 'APP', RENEWAL: 'REN', CHANGE: 'CHG' }[x.pendingAction],
@@ -65,7 +65,7 @@ export function buildCatalog(d: PsData, seed: number): SfObject[] {
       columns: [col('APP_NO', 'VARCHAR(16)', 'Application number'), col('PERSON_ID', 'VARCHAR(12)', 'Person id'), col('PGM_CD', 'VARCHAR(4)', 'Program code'), col('CHNL_CD', 'VARCHAR(3)', 'Channel (ONL, INP, PHN, MAL)'), col('RCVD_DT', 'DATE', 'Received date'), col('CMPLT_DT', 'DATE', 'Date the application became complete'), col('DECN_DT', 'DATE', 'Decision date'), col('DECN_CD', 'VARCHAR(1)', 'A approved, D denied, W withdrawn, P pending'), col('DIST_CD', 'VARCHAR(2)', 'Service district code'), ...cdc],
       rowCount: 1_904_115, bytes: 2.6e8, owner: 'INGEST_ADMIN', lastAltered: '2026-09-30 06:02:44', upstream: ['ext:Eligibility'],
       rowAccess: codeAccess('DIST_CD'),
-      rows: memo(() => withCdc(rng, d.applications.slice(-300).reverse(), (a) => ({
+      rows: memoRng(rng, seed + 703, () => withCdc(rng, d.applications.slice(-300).reverse(), (a) => ({
         APP_NO: a.appId, PERSON_ID: consByKey.get(a.constituentKey)!.constituentId, PGM_CD: a.program, CHNL_CD: { Online: 'ONL', 'In person': 'INP', Phone: 'PHN', Mail: 'MAL' }[a.channel] ?? 'ONL',
         RCVD_DT: a.received, CMPLT_DT: a.complete, DECN_DT: a.decision, DECN_CD: a.outcome.charAt(0), DIST_CD: codeOf(a.district),
       }), '2026-09-15', (a) => ANALYST_CODES.includes(codeOf(a.district)))),
@@ -75,7 +75,7 @@ export function buildCatalog(d: PsData, seed: number): SfObject[] {
       comment: 'Issued benefit payments (EBT, direct deposit and provider disbursements)',
       columns: [col('PMT_ID', 'VARCHAR(20)', 'Payment id'), col('CASE_NO', 'VARCHAR(20)', 'Case number'), col('PGM_CD', 'VARCHAR(4)', 'Program code'), col('ISSUE_DT', 'DATE', 'Issuance date'), col('PMT_AMT', 'NUMBER(10,2)', 'Amount issued'), col('QC_ERR_CD', 'VARCHAR(6)', 'Quality-control error code'), col('RCPT_SSN', 'VARCHAR(11)', 'Recipient government identifier', { tags: ['GOV_ID'] }), ...cdc],
       rowCount: 26_884_310, bytes: 2.2e9, owner: 'INGEST_ADMIN', lastAltered: '2026-09-30 04:20:00', upstream: ['ext:Benefits payments'],
-      rows: memo(() => withCdc(rng, d.payments.slice(-300).reverse(), (p) => ({
+      rows: memoRng(rng, seed + 704, () => withCdc(rng, d.payments.slice(-300).reverse(), (p) => ({
         PMT_ID: p.paymentId, CASE_NO: p.caseId, PGM_CD: p.program, ISSUE_DT: p.date, PMT_AMT: p.amount, QC_ERR_CD: p.errorType ? p.errorType.replace('Underpayment – ', 'U-').slice(0, 6).toUpperCase() : null, RCPT_SSN: p.govId,
       }), '2026-09-02')),
     },
@@ -85,7 +85,7 @@ export function buildCatalog(d: PsData, seed: number): SfObject[] {
       columns: [col('SR_NO', 'VARCHAR(16)', 'Request number'), col('SR_TYPE', 'VARCHAR(40)', 'Request type (free text, mixed case)'), col('CHNL', 'VARCHAR(12)', 'Channel'), col('DIST_CD', 'VARCHAR(2)', 'Service district code'), col('OPEN_TS', 'TIMESTAMP_NTZ', 'Created'), col('CLOSE_TS', 'TIMESTAMP_NTZ', 'Closed'), col('STAT', 'VARCHAR(8)', 'OPEN / CLOSED'), ...cdc],
       rowCount: 3_611_204, bytes: 4.4e8, owner: 'INGEST_ADMIN', lastAltered: '2026-09-30 06:11:09', upstream: ['ext:311 service requests'],
       rowAccess: codeAccess('DIST_CD'),
-      rows: memo(() => withCdc(rng, d.requests.slice(-300).reverse(), (s) => ({
+      rows: memoRng(rng, seed + 705, () => withCdc(rng, d.requests.slice(-300).reverse(), (s) => ({
         SR_NO: s.srId, SR_TYPE: noisy(rng, s.type), CHNL: s.channel.toUpperCase(), DIST_CD: codeOf(s.district), OPEN_TS: ts(s.created, s.createdMin),
         CLOSE_TS: s.closed ? ts(s.closed, (s.createdMin + Math.round(((s.resolutionDays ?? 0) % 1) * 1440)) % 1440) : null, STAT: s.closed ? 'CLOSED' : 'OPEN',
       }), '2026-09-28', (s) => ANALYST_CODES.includes(codeOf(s.district)))),
@@ -95,7 +95,7 @@ export function buildCatalog(d: PsData, seed: number): SfObject[] {
       comment: 'General ledger budget and actual lines from the county finance system',
       columns: [col('GL_ACCT', 'VARCHAR(10)', 'GL account'), col('COST_CTR', 'VARCHAR(10)', 'Cost centre'), col('FISCAL_PER', 'VARCHAR(7)', 'Fiscal period (YYYY-MM)'), col('AMT_TYPE', 'VARCHAR(3)', 'BUD budget, ACT actual'), col('AMT', 'NUMBER(14,2)', 'Amount'), col('FTE', 'NUMBER(7,1)', 'Positions (authorised or filled)'), ...cdc],
       rowCount: 1_240_118, bytes: 9.1e7, owner: 'INGEST_ADMIN', lastAltered: '2026-09-29 23:30:00', upstream: ['ext:Finance'],
-      rows: memo(() => withCdc(rng, d.budget.slice(-120).reverse().flatMap((b) => [{ b, t: 'BUD' }, { b, t: 'ACT' }]), ({ b, t }) => ({
+      rows: memoRng(rng, seed + 706, () => withCdc(rng, d.budget.slice(-120).reverse().flatMap((b) => [{ b, t: 'BUD' }, { b, t: 'ACT' }]), ({ b, t }) => ({
         GL_ACCT: b.admin ? '6100-ADM' : '6200-PRG', COST_CTR: `CC-${pad(b.dept.length * 37, 4)}`, FISCAL_PER: b.month, AMT_TYPE: t, AMT: t === 'BUD' ? b.budget : b.actual, FTE: t === 'BUD' ? b.fteBudget : b.fteFilled,
       }), '2026-09-29')),
     },

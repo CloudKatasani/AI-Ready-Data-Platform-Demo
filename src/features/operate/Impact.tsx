@@ -91,7 +91,7 @@ function Inner() {
                         <Link to={path(n.route)} title={n.why} className={cls('block rounded-md bg-surface px-2 py-1.5 text-xs hover:bg-surface2', RING[n.severity])} style={{ borderLeft: `3px solid ${layerColor(st.layer)}` }}>
                           <span className="block break-all font-medium">{n.label}</span>
                           {n.sub && <span className="block text-[11px] text-muted">{n.sub}</span>}
-                          <span className={cls('mt-1 inline-block rounded px-1 text-[10px] font-semibold', n.severity === 'breaking' ? 'bg-bad/15 text-bad' : n.severity === 'review' ? 'bg-warn/15 text-warn' : 'bg-surface2 text-muted')}>{SEVERITY_TEXT[n.severity]}</span>
+                          <span className={cls('mt-1 inline-block rounded px-1 text-[10px] font-semibold', n.severity === 'breaking' ? 'bg-bad/15 text-ink' : n.severity === 'review' ? 'bg-warn/15 text-ink' : 'bg-surface2 text-muted')}>{SEVERITY_TEXT[n.severity]}</span>
                         </Link>
                       </li>
                     ))}
@@ -117,7 +117,7 @@ function Inner() {
           <div className="mt-3"><span className="label">Data contracts</span>
             {r.contracts.length ? (
               <table className="mt-1 w-full text-xs"><thead><tr className="text-left text-muted"><th className="py-1 font-medium">Product</th><th className="py-1 font-medium">Version</th><th className="py-1 font-medium">Change notice</th></tr></thead>
-                <tbody>{r.contracts.map((c) => <tr key={c.productId} className="border-t border-line/60"><td className="py-1"><Link className="hover:underline" to={path(`certify/${c.productId}`)}>{c.name}</Link></td><td className="mono py-1">{c.from} → {c.to} <span className={cls('ml-1 rounded px-1', c.bump === 'major' ? 'bg-bad/15 text-bad' : 'bg-surface2')}>{c.bump}</span></td><td className="py-1">{c.noticeDays ? `${c.noticeDays} days (breaking)` : 'Release notes only'}</td></tr>)}</tbody>
+                <tbody>{r.contracts.map((c) => <tr key={c.productId} className="border-t border-line/60"><td className="py-1"><Link className="hover:underline" to={path(`certify/${c.productId}`)}>{c.name}</Link></td><td className="mono py-1">{c.from} → {c.to} <span className={cls('ml-1 rounded px-1', c.bump === 'major' ? 'bg-bad/15 font-semibold text-ink' : 'bg-surface2')}>{c.bump}</span></td><td className="py-1">{c.noticeDays ? `${c.noticeDays} days (breaking)` : 'Release notes only'}</td></tr>)}</tbody>
               </table>
             ) : <p className="text-muted">No contract change needed.</p>}
           </div>

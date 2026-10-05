@@ -1,6 +1,6 @@
 // Bronze / Silver / Gold objects and product output ports for HPR_AI_PLATFORM (spec section 5).
 import type { Row, SfObject } from '../../types';
-import { cdcColumns, col, dateKey, GATE6_CHECK, memo, withCdc } from '../shared/catalog-kit';
+import { cdcColumns, col, dateKey, GATE6_CHECK, memo, memoRng, withCdc } from '../shared/catalog-kit';
 import { Rng } from '../../mock-snowflake/rng';
 import { addDays, noisy, pad, round, ts } from '../../mock-snowflake/generators';
 import { INV_WEEKS, isCompInMonth, type RetailData } from './data';
@@ -75,7 +75,7 @@ export function buildCatalog(d: RetailData, seed: number): SfObject[] {
       ],
       rowCount: 21_406_118, bytes: 3.4e9, owner: 'INGEST_ADMIN', lastAltered: '2026-09-30 06:12:40', upstream: ['ext:Loyalty'],
       rowAccess: codeAccess('RGN_CD'),
-      rows: memo(() => withCdc(rng, memSample, (m) => ({
+      rows: memoRng(rng, seed + 701, () => withCdc(rng, memSample, (m) => ({
         MBR_ID: rng.chance(0.3) ? `${m.id}  ` : m.id, FST_NM: noisy(rng, m.first), LST_NM: noisy(rng, m.last),
         EMAIL_ADDR: rng.chance(0.3) ? m.email.toUpperCase() : m.email, PHONE_NO: m.phone, HOME_STORE_NO: m.homeStoreId,
         RGN_CD: rng.chance(0.2) ? m.regionCode.toLowerCase() : m.regionCode, TIER_CD: m.tier === 'Elite' ? 'ELT' : m.tier === 'Plus' ? 'PLS' : 'MBR',
@@ -98,7 +98,7 @@ export function buildCatalog(d: RetailData, seed: number): SfObject[] {
       ],
       rowCount: 2_184_660_215, bytes: 4.1e11, owner: 'INGEST_ADMIN', lastAltered: '2026-09-30 06:15:00', upstream: ['ext:POS transactions'],
       rowAccess: codeAccess('RGN_CD'),
-      rows: memo(() => withCdc(rng, posTxns(), (t) => {
+      rows: memoRng(rng, seed + 702, () => withCdc(rng, posTxns(), (t) => {
         const s = storeByKey.get(t.storeKey)!;
         return { TXN_ID: t.id, STORE_NO: rng.chance(0.25) ? ` ${s.id}` : s.id, RGN_CD: s.regionCode, BUS_DT: t.date, REG_NO: t.reg, MBR_ID: t.memberId, TXN_TYPE: t.type, GROSS_AMT: t.gross, DISC_AMT: t.disc, TENDER_CD: t.tender, CARD_LAST4: t.card, PROMO_CD: t.promo };
       }, '2026-09-29')),
@@ -112,7 +112,7 @@ export function buildCatalog(d: RetailData, seed: number): SfObject[] {
         col('ORDER_AMT', 'NUMBER(12,2)', 'Order amount'), col('CARD_LAST4', 'VARCHAR(4)', 'Payment card last four digits', { tags: ['PCI'] }), col('ORDER_STATUS', 'VARCHAR(12)', 'Order status'), ...cdc,
       ],
       rowCount: 186_204_771, bytes: 3.9e10, owner: 'INGEST_ADMIN', lastAltered: '2026-09-30 06:09:12', upstream: ['ext:E-commerce orders'],
-      rows: memo(() => withCdc(rng, ecomOrders(), (o) => ({
+      rows: memoRng(rng, seed + 703, () => withCdc(rng, ecomOrders(), (o) => ({
         ORDER_NO: o.id, CUST_EMAIL: rng.chance(0.3) ? o.member.email.toUpperCase() : o.member.email, MBR_ID: o.member.id, ORDER_TS: o.ts,
         FULFIL_STORE_NO: storeByKey.get(o.storeKey)!.id, FULFIL_TYPE: o.type, ORDER_AMT: o.amount, CARD_LAST4: o.card, ORDER_STATUS: noisy(rng, o.status),
       }), '2026-09-28')),
@@ -122,7 +122,7 @@ export function buildCatalog(d: RetailData, seed: number): SfObject[] {
       comment: 'Stock on hand by location and SKU from the warehouse and store inventory system',
       columns: [col('LOC_NO', 'VARCHAR(8)', 'Store or DC number'), col('DEPT_CD', 'VARCHAR(4)', 'Merchandise department code'), col('SKU_NO', 'VARCHAR(12)', 'SKU'), col('ON_HAND_QTY', 'NUMBER(10)', 'Units on hand'), col('ON_ORDER_QTY', 'NUMBER(10)', 'Units on order'), col('SNAPSHOT_TS', 'TIMESTAMP_NTZ', 'Snapshot time'), ...cdc],
       rowCount: 9_812_440_018, bytes: 6.2e11, owner: 'INGEST_ADMIN', lastAltered: '2026-09-30 05:40:00', upstream: ['ext:WMS inventory'],
-      rows: memo(() => withCdc(rng, d.inventory.filter((x) => x.week === INV_WEEKS[INV_WEEKS.length - 1]), (x) => {
+      rows: memoRng(rng, seed + 704, () => withCdc(rng, d.inventory.filter((x) => x.week === INV_WEEKS[INV_WEEKS.length - 1]), (x) => {
         const c = CATEGORIES.find((cc) => cc.name === x.category)!;
         const p = rng.pick(productsByCat.get(x.category)!);
         return { LOC_NO: storeByKey.get(x.storeKey)!.id, DEPT_CD: rng.chance(0.25) ? c.code.toLowerCase() : c.code, SKU_NO: p.sku, ON_HAND_QTY: Math.round(x.end / Math.max(1, x.skus) * rng.range(0.5, 2)), ON_ORDER_QTY: rng.int(0, 24), SNAPSHOT_TS: ts(x.week, 1380) };
@@ -133,7 +133,7 @@ export function buildCatalog(d: RetailData, seed: number): SfObject[] {
       comment: 'Supplier EDI documents: 850 purchase orders and 856 advance ship notices',
       columns: [col('EDI_DOC', 'VARCHAR(3)', 'EDI transaction set (850 PO, 856 ASN)'), col('PO_NO', 'VARCHAR(12)', 'PO number'), col('LINE_NO', 'NUMBER', 'Line'), col('VENDOR_NO', 'VARCHAR(8)', 'Vendor number'), col('ORD_QTY', 'NUMBER(10)', 'Ordered units'), col('SHIP_QTY', 'NUMBER(10)', 'Shipped units (ASN)'), col('REQ_DLV_DT', 'DATE', 'Requested delivery date'), col('RCV_DT', 'DATE', 'Received at DC'), ...cdc],
       rowCount: 14_208_552, bytes: 2.2e9, owner: 'INGEST_ADMIN', lastAltered: '2026-09-30 04:20:00', upstream: ['ext:Supplier EDI'],
-      rows: memo(() => withCdc(rng, d.poLines.slice(-300).reverse(), (l) => ({
+      rows: memoRng(rng, seed + 705, () => withCdc(rng, d.poLines.slice(-300).reverse(), (l) => ({
         EDI_DOC: rng.chance(0.5) ? '850' : '856', PO_NO: l.po, LINE_NO: l.line, VENDOR_NO: `V${pad(20_400 + l.supplierKey * 17, 6)}`, ORD_QTY: l.ordered,
         SHIP_QTY: l.asnAccurate ? l.receivedUnits : l.receivedUnits + rng.int(1, 12), REQ_DLV_DT: l.requested, RCV_DT: l.received,
       }), '2026-09-15')),

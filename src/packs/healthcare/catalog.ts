@@ -1,6 +1,6 @@
 // Bronze / Silver / Gold objects and product output ports for CVH_AI_PLATFORM (spec section 5).
 import type { SfObject } from '../../types';
-import { cdcColumns, col, dateKey, GATE6_CHECK, memo, withCdc } from '../shared/catalog-kit';
+import { cdcColumns, col, dateKey, GATE6_CHECK, memo, memoRng, withCdc } from '../shared/catalog-kit';
 import { Rng } from '../../mock-snowflake/rng';
 import { addDays, noisy, pad, round, ts } from '../../mock-snowflake/generators';
 import type { HcData } from './data';
@@ -38,7 +38,7 @@ export function buildCatalog(d: HcData, seed: number): SfObject[] {
       ],
       rowCount: 9_412_877, bytes: 1.9e9, owner: 'INGEST_ADMIN', lastAltered: '2026-09-30 05:52:18', upstream: ['ext:EHR (ADT, encounters)'],
       rowAccess: codeAccess('MARKET_CD'),
-      rows: memo(() => withCdc(rng, patSample, (p) => ({
+      rows: memoRng(rng, seed + 701, () => withCdc(rng, patSample, (p) => ({
         MRN: rng.chance(0.3) ? `${p.mrn}  ` : p.mrn, PAT_FIRST_NM: noisy(rng, p.first), PAT_LAST_NM: noisy(rng, p.last), BIRTH_DT: p.dob,
         EMAIL_ADDR: rng.chance(0.3) ? p.email.toUpperCase() : p.email, ZIP_CD: p.zip, MARKET_CD: p.marketCode, PRIMARY_PAYER_ID: payerOf(p.payerKey).id,
         PAT_STATUS_CD: p.deathDate ? 'D' : 'A',
@@ -59,7 +59,7 @@ export function buildCatalog(d: HcData, seed: number): SfObject[] {
       ],
       rowCount: 31_604_552, bytes: 4.4e9, owner: 'INGEST_ADMIN', lastAltered: '2026-09-30 06:10:41', upstream: ['ext:EHR (ADT, encounters)'],
       rowAccess: facilityAccess('FACILITY_CD'),
-      rows: memo(() => {
+      rows: memoRng(rng, seed + 799, () => {
         const items = [...d.stays.slice(-150).map((s) => ({ k: 'IP' as const, s })), ...d.ed.slice(-150).map((v) => ({ k: 'ED' as const, v }))].reverse();
         return withCdc(rng, items, (x) => {
           if (x.k === 'IP') {
@@ -80,7 +80,7 @@ export function buildCatalog(d: HcData, seed: number): SfObject[] {
         col('CARC_CD', 'VARCHAR(4)', 'Claim adjustment reason code on denial'), col('PAID_AMT', 'NUMBER(12,2)', 'Paid amount (835)'), col('PAID_DT', 'DATE', 'Remit date'), ...cdc,
       ],
       rowCount: 112_406_215, bytes: 1.6e10, owner: 'INGEST_ADMIN', lastAltered: '2026-09-30 05:31:07', upstream: ['ext:Claims & remits (837/835)'],
-      rows: memo(() => withCdc(rng, d.claims.slice(-300).reverse(), (c) => {
+      rows: memoRng(rng, seed + 702, () => withCdc(rng, d.claims.slice(-300).reverse(), (c) => {
         const done = c.resolvedDate <= AS_OF;
         return {
           CLAIM_ID: c.id, ENC_ID: c.encId, PAYER_ID: payerOf(c.payerKey).id, TOT_CHG_AMT: c.charges, SUBMIT_DT: c.submitDate,
@@ -96,7 +96,7 @@ export function buildCatalog(d: HcData, seed: number): SfObject[] {
         col('APPT_DT', 'DATE', 'Appointment date'), col('BOOKED_DT', 'DATE', 'Date booked'), col('VISIT_TYPE_CD', 'VARCHAR(3)', 'NEW or EST'), col('APPT_STATUS_CD', 'VARCHAR(10)', 'Status (raw, mixed case)'), ...cdc,
       ],
       rowCount: 48_920_441, bytes: 3.9e9, owner: 'INGEST_ADMIN', lastAltered: '2026-09-30 06:02:55', upstream: ['ext:Scheduling'],
-      rows: memo(() => withCdc(rng, d.appts.slice(-300).reverse(), (a) => ({
+      rows: memoRng(rng, seed + 703, () => withCdc(rng, d.appts.slice(-300).reverse(), (a) => ({
         APPT_ID: a.id, MRN: patByKey.get(a.patientKey)!.mrn, DEPT_ID: d.clinics[a.clinicKey - 1].id, APPT_DT: a.date, BOOKED_DT: a.booked,
         VISIT_TYPE_CD: a.type === 'New' ? 'NEW' : 'EST', APPT_STATUS_CD: noisy(rng, a.status === 'No-show' ? 'NOSHOW' : a.status.toUpperCase()),
       }), '2026-09-22')),
@@ -109,7 +109,7 @@ export function buildCatalog(d: HcData, seed: number): SfObject[] {
         col('DRUG_NM', 'VARCHAR(60)', 'Drug name (raw)'), col('DISP_QTY', 'NUMBER(6)', 'Units dispensed'), col('UNIT_COST', 'NUMBER(10,2)', 'Acquisition cost per unit'), col('FORMULARY_FLG', 'VARCHAR(1)', 'On formulary (Y/N)'), ...cdc,
       ],
       rowCount: 64_118_090, bytes: 5.2e9, owner: 'INGEST_ADMIN', lastAltered: '2026-09-30 05:47:30', upstream: ['ext:Pharmacy'],
-      rows: memo(() => withCdc(rng, d.supply.filter((l) => l.itemType === 'Pharmacy').slice(-300).reverse(), (l) => ({
+      rows: memoRng(rng, seed + 704, () => withCdc(rng, d.supply.filter((l) => l.itemType === 'Pharmacy').slice(-300).reverse(), (l) => ({
         DISPENSE_ID: l.id, ENC_ID: l.encId, NDC_CD: l.itemId, DRUG_NM: noisy(rng, l.desc), DISP_QTY: l.qty, UNIT_COST: l.unitCost, FORMULARY_FLG: l.category === 'Formulary drugs' ? 'Y' : 'N',
       }), '2026-09-20')),
     },
@@ -122,7 +122,7 @@ export function buildCatalog(d: HcData, seed: number): SfObject[] {
         col('UNIT_COST', 'NUMBER(10,2)', 'Unit cost'), col('VENDOR_NM', 'VARCHAR(40)', 'Vendor (raw)'), col('CONTRACT_NO', 'VARCHAR(12)', 'GPO or local contract number'), ...cdc,
       ],
       rowCount: 22_870_334, bytes: 2.7e9, owner: 'INGEST_ADMIN', lastAltered: '2026-09-30 04:58:12', upstream: ['ext:Supply chain'],
-      rows: memo(() => withCdc(rng, d.supply.filter((l) => l.itemType === 'Supply').slice(-300).reverse(), (l) => ({
+      rows: memoRng(rng, seed + 705, () => withCdc(rng, d.supply.filter((l) => l.itemType === 'Supply').slice(-300).reverse(), (l) => ({
         USAGE_ID: l.id, CASE_ID: l.encId, PATIENT_MRN: l.mrn, ITEM_ID: l.itemId, ITEM_DESC: noisy(rng, l.desc), USE_QTY: l.qty, UNIT_COST: l.unitCost,
         VENDOR_NM: noisy(rng, l.vendor), CONTRACT_NO: l.onContract ? `GPO-${pad(3100 + l.desc.length * 7, 6)}` : null,
       }), '2026-09-18')),
