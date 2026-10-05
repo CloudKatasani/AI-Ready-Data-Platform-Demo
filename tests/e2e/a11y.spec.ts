@@ -3,7 +3,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import { isPackReady, PROFILES } from '../../src/packs';
 
-const TABS = ['map', 'explorer', 'semantic', 'glossary', 'context', 'certify', 'agents', 'marketplace', 'my-access'];
+const TABS = ['map', 'explorer', 'semantic', 'glossary', 'context', 'certify', 'agents', 'marketplace', 'my-access', 'why/knockout', 'why/compare', 'readiness', 'roadmap', 'build', 'coverage', 'operating-model', 'cost', 'health', 'agent-quality', 'impact'];
 
 for (const scheme of ['light', 'dark'] as const) {
   for (const profile of PROFILES.filter((p) => isPackReady(p.id))) {

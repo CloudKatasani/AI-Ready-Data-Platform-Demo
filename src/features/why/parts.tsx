@@ -24,7 +24,7 @@ export function SwitchRow({ value, onChange, compact }: { value: LayerSwitches; 
             </span>
             <span className="min-w-0">
               <span className="block text-sm font-medium leading-tight">{s.label}</span>
-              {!compact && <span className="block truncate text-[11px] text-muted">{on ? s.blurb : 'Layer off'}</span>}
+              {!compact && <span className={cls('block truncate text-[11px]', on ? 'text-ink/80' : 'text-muted')}>{on ? s.blurb : 'Layer off'}</span>}
             </span>
           </button>
         );

@@ -12,7 +12,7 @@ import type { RaciStyle } from '../../ext/state';
 
 const CELL: Record<Exclude<Raci, ''>, string> = {
   'A/R': 'bg-accent text-white',
-  A: 'bg-accent/80 text-white',
+  A: 'bg-accent text-white',
   R: 'bg-accent/25 text-ink',
   C: 'border border-line text-ink',
   I: 'text-muted',
@@ -71,7 +71,7 @@ export default function OperatingModel() {
       <section className="panel p-4" aria-label="Operating style">
         <div className="flex flex-wrap items-center gap-3">
           <div role="radiogroup" aria-label="Operating style" className="inline-flex rounded-md border border-line p-0.5">
-            {STYLES.map((s) => <button key={s.id} role="radio" aria-checked={style === s.id} className={cls('rounded px-3 py-1.5 text-sm', style === s.id ? 'bg-accent text-white' : 'hover:bg-surface2')} onClick={() => setStyle(s.id)}>{s.label}</button>)}
+            {STYLES.map((s) => <button key={s.id} role="radio" aria-checked={style === s.id} className={cls('rounded px-3 py-1.5 text-sm', style === s.id ? 'bg-accent font-semibold text-white' : 'hover:bg-surface2')} onClick={() => setStyle(s.id)}>{s.label}</button>)}
           </div>
           <p className="min-w-[240px] flex-1 text-sm text-muted">{STYLES.find((s) => s.id === style)!.when}</p>
         </div>

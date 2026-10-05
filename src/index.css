@@ -40,6 +40,8 @@ body {
   .btn { @apply inline-flex items-center gap-1.5 rounded-md border border-line bg-surface px-3 py-1.5 text-sm font-medium text-ink hover:bg-surface2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors; }
   .btn-primary { @apply inline-flex items-center gap-1.5 rounded-md bg-accent px-3 py-1.5 text-sm font-semibold text-white hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-opacity; }
   :root[data-theme='dark'] .btn-primary { color: rgb(12 20 27); }
+  /* White on the light dark-mode accent fails contrast: use the dark ink, as .btn-primary does. */
+  :root[data-theme='dark'] .bg-accent.text-white { color: rgb(12 20 27); }
   .btn-ghost { @apply inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-sm text-muted hover:text-ink hover:bg-surface2; }
   .h-title { @apply font-display font-semibold text-xl tracking-tight; }
   .label { @apply text-xs font-semibold uppercase tracking-wide text-muted; }

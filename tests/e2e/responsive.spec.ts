@@ -3,7 +3,7 @@
 import { expect, test } from '@playwright/test';
 import { isPackReady, PROFILES } from '../../src/packs';
 
-const TABS = ['map', 'explorer', 'semantic', 'glossary', 'context', 'certify', 'agents', 'marketplace', 'my-access'];
+const TABS = ['map', 'explorer', 'semantic', 'glossary', 'context', 'certify', 'agents', 'marketplace', 'my-access', 'why/knockout', 'why/compare', 'readiness', 'roadmap', 'build', 'coverage', 'operating-model', 'cost', 'health', 'agent-quality', 'impact'];
 const SIZES = [{ width: 1440, height: 900 }, { width: 1024, height: 768 }, { width: 390, height: 844 }];
 
 for (const profile of PROFILES.filter((p) => isPackReady(p.id))) {

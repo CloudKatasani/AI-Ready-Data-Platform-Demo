@@ -64,20 +64,20 @@ export default function Roadmap() {
       />
 
       {/* Phase band */}
-      <div className="panel overflow-x-auto p-4 scroll-thin" role="tablist" aria-label="Phases">
+      <div className="panel overflow-x-auto p-4 scroll-thin" role="group" aria-label="Phases">
         <div className="flex min-w-[860px] items-center">
           {placed.map((p, i) => (
             <div key={p.id} className="flex min-w-0 flex-1 items-center">
               <button
-                role="tab" aria-selected={p.id === sel} onClick={() => setSel(p.id)}
+                aria-pressed={p.id === sel} onClick={() => setSel(p.id)}
                 className={cls('relative flex h-16 min-w-0 flex-1 flex-col justify-center px-5 text-left text-sm transition-colors [clip-path:polygon(0_0,calc(100%-14px)_0,100%_50%,calc(100%-14px)_100%,0_100%,14px_50%)]',
                   p.id < pos.phase ? 'bg-good/20' : p.id === pos.phase ? 'bg-accent/25' : 'bg-surface2', p.id === sel && 'ring-2 ring-inset ring-accent', highlight.includes(p.id) && 'outline outline-2 outline-warn')}
               >
-                <span className="text-[11px] text-muted">Phase {p.id} · {p.length} wk</span>
+                <span className="text-[11px] text-ink/75">Phase {p.id} · {p.length} wk</span>
                 <span className="truncate font-semibold">{p.name}</span>
                 {p.id === pos.phase && <span className="absolute -top-0.5 right-6 rounded-b bg-accent px-1.5 text-[10px] font-semibold text-white">You are here</span>}
               </button>
-              {i < placed.length - 1 && <span className="mx-0.5 h-3 w-3 shrink-0 rotate-45 border-2 border-ink/60 bg-surface" title={`Gate: ${p.gate.label}`} aria-label={`Gate after ${p.name}: ${p.gate.label}`} />}
+              {i < placed.length - 1 && <span role="img" className="mx-0.5 h-3 w-3 shrink-0 rotate-45 border-2 border-ink/60 bg-surface" title={`Gate: ${p.gate.label}`} aria-label={`Gate after ${p.name}: ${p.gate.label}`} />}
             </div>
           ))}
         </div>

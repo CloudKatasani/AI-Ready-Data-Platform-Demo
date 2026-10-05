@@ -11,7 +11,7 @@ import { runEval } from '../../ext/quality';
 import type { ChangeType } from '../../ext/types';
 
 const RING: Record<ImpactSeverity, string> = { breaking: 'ring-2 ring-bad', review: 'ring-2 ring-warn ring-dashed', none: 'ring-1 ring-line' };
-const SEV_CHIP: Record<ImpactSeverity, string> = { breaking: 'border-bad/40 bg-bad/10 text-bad rounded-sm', review: 'border-warn/50 bg-warn/10 text-warn rounded-sm', none: 'border-line text-muted rounded-full' };
+const SEV_CHIP: Record<ImpactSeverity, string> = { breaking: 'border-bad/60 bg-bad/10 text-ink rounded-sm', review: 'border-warn/60 bg-warn/10 text-ink rounded-sm', none: 'border-line text-muted rounded-full' };
 const CHANGES: ChangeType[] = ['type', 'rename', 'drop', 'semantics', 'grain'];
 
 export default function Impact() {
