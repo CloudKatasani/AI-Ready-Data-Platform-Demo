@@ -150,7 +150,7 @@ export function feedbackAnswer(pack: IndustryPack, ext: ExtState, agentId: strin
   return {
     ...base,
     kind: 'answer',
-    summary: wrongNow ? `Total arrears balance is ${item!.wrong(ctx)}.` : r.summary,
+    summary: wrongNow ? `${term?.term ?? "Answer"}: ${item!.wrong(ctx)}.` : r.summary,
     table: wrongNow ? undefined : r.table,
     chart: undefined,
     sql: r.sql,

@@ -15,6 +15,7 @@ import { buildProducts, ROW_POLICY } from './products';
 import { buildScenarios } from './scenarios';
 import { KPI_RANGES, PLANS, REGIONS } from './generators.config';
 import { PROFILE } from './pack';
+import { buildExt } from './ext';
 import * as Q from './queries';
 
 const DB = `${PROFILE.dbPrefix}_AI_PLATFORM`;
@@ -83,7 +84,7 @@ export function buildPack(): IndustryPack {
     dmf, accessHistory,
   };
   const shared = buildSharedObjects({ ...core, physical });
-  const pack: IndustryPack = { ...core, objects: [...physical, ...shared] };
+  const pack: IndustryPack = { ...core, objects: [...physical, ...shared], ext: buildExt(data, physical) };
   packRef = pack;
   return pack;
 }
