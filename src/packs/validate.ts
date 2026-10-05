@@ -3,6 +3,7 @@ import type { IndustryPack, LiveState, SchemaName } from '../types';
 import { buildTrace } from '../agents/engine/trace';
 import { Matcher } from '../agents/engine/matcher';
 import { computeGates, gateStatus } from '../lib/certification';
+import { validateExt } from '../ext/validateExt';
 
 const SCHEMAS: SchemaName[] = ['RAW_BRONZE', 'CURATED_SILVER', 'CONFORMED_GOLD', 'SEMANTIC', 'GLOSSARY', 'CONTEXT', 'DATA_PRODUCTS', 'AGENTS', 'GOVERNANCE'];
 const SHARED: Record<string, string[]> = {
@@ -137,6 +138,9 @@ export function validatePack(pack: IndustryPack): ValidationResult {
   check(failing.join(',') === '4:warn,6:fail', `DP-05 must fail exactly gate 4 (warn) and gate 6 (fail); got ${failing.join(',') || 'none'}`);
   const fixed = computeGates(pack, dp05, { ran: true, fixes: pack.certificationScript.failures.map((f) => f.checkId) });
   check(fixed.every((x) => gateStatus(x) === 'pass'), 'DP-05 must pass every gate after both fixes');
+
+  // Enhancement block (E1–E11), when the pack carries one
+  validateExt(pack, initialLive(pack), check);
 
   return { pack: pack.profile.id, errors, checks };
 }
