@@ -4,7 +4,8 @@ import type { SemanticView } from '../../types';
 import { BarChart, CodeBlock, PageHeader, SimpleTable, StatusChip, Tabs } from '../../components/ui';
 import { Icon } from '../../components/icons';
 import { cls, fmtNum } from '../../lib/format';
-import { useDb, useLive, usePack, usePackPath } from '../../app/context';
+import { useDb, useExt, useLive, usePack, usePackPath } from '../../app/context';
+import { extraVerifiedQueries } from '../../ext/quality';
 import { verifiedQueriesLive } from '../../mock-snowflake/shared-schemas';
 
 type PanelTab = 'dims' | 'time' | 'facts' | 'metrics' | 'vq' | 'ddl';
@@ -25,6 +26,10 @@ function Model({ sv }: { sv: SemanticView }) {
   const db = useDb();
   const path = usePackPath();
   const fact = sv.tables[0];
+  const pack = usePack();
+  const [ext] = useExt();
+  const fs = pack.ext?.feedbackScript;
+  const rel = fs && fs.relationship.view === sv.name && ext.quality.fixes.includes('relationship') ? fs.relationship : undefined;
   const card = (t: SemanticView['tables'][number], strong?: boolean) => {
     const o = db.getObject(t.fqn);
     return (
@@ -52,6 +57,12 @@ function Model({ sv }: { sv: SemanticView }) {
           </div>
         );
       })}
+      {rel && (
+        <div className="ml-4 flex flex-wrap items-center gap-2 rounded-md border border-good/40 bg-good/5 px-3 py-2 text-xs">
+          <Icon name="check" size={12} className="text-good" /><span className="font-semibold">{rel.label}</span><span className="text-muted">{rel.detail}</span>
+          <span className="rounded bg-good/15 px-1 text-[10px] font-semibold text-good">Added from feedback</span>
+        </div>
+      )}
     </div>
   );
 }
@@ -110,12 +121,13 @@ function TryMetric({ sv }: { sv: SemanticView }) {
 }
 
 function SemanticInner({ sv }: { sv: SemanticView }) {
+  const [ext] = useExt();
   const pack = usePack();
   const db = useDb();
   const live = useLive();
   const path = usePackPath();
   const [tab, setTab] = useState<PanelTab>('metrics');
-  const vqs = verifiedQueriesLive(pack, live).filter((v) => v.semanticView === sv.name);
+  const vqs = [...verifiedQueriesLive(pack, live), ...extraVerifiedQueries(pack, ext)].filter((v) => v.semanticView === sv.name);
   const agents = pack.agents.filter((a) => a.tools.some((t) => t.target === sv.name));
   const products = pack.products.filter((p) => sv.productIds.includes(p.id));
   return (

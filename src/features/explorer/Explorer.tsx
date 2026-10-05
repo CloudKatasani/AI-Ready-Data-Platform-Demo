@@ -235,9 +235,13 @@ function ExplorerInner({ id }: { id: string }) {
                   <tbody>
                     {o.columns.map((c) => {
                       const t = c.termId ? pack.glossary.find((g) => g.id === c.termId) : undefined;
+                      const ip = pack.ext?.impactPresets.find((x) => x.objectFqn === id && x.column === c.name);
+                      const impactQs = new URLSearchParams({ object: id, column: c.name, change: ip?.change ?? 'type', ...(ip ? { preset: ip.id } : {}) });
                       return (
                         <tr key={c.name} className="border-t border-line/70 align-top">
-                          <td className="mono px-3 py-1.5 font-medium">{c.name}</td>
+                          <td className="mono px-3 py-1.5 font-medium">{c.name}
+                            {['bronze', 'silver', 'gold'].includes(o.layer) && <Link to={path(`impact?${impactQs}`)} className="ml-2 inline-flex items-center gap-0.5 font-sans text-[11px] font-normal text-accent hover:underline" aria-label={`Impact of change to ${c.name}`}><Icon name="blast" size={11} />Impact of change</Link>}
+                          </td>
                           <td className="mono px-3 py-1.5 text-xs text-muted">{c.type}</td>
                           <td className="px-3 py-1.5 text-xs">{c.nullable ? 'Y' : 'N'}</td>
                           <td className="px-3 py-1.5 text-xs text-muted">{c.comment}</td>

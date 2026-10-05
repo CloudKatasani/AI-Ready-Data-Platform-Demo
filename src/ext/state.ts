@@ -24,7 +24,8 @@ export interface CostLevers {
 }
 
 export interface Postmortem { incidentId: string; openedAt: string; resolvedAt: string; ttdMin: number; ttrMin: number }
-export interface FeedbackItem { id: string; agentId: string; question: string; answer: string; comment: string; role: string; category: string; at: string; fixed?: boolean }
+export type FailCategory = 'wrong_metric' | 'missing_rule' | 'ambiguous_term' | 'wrong_join' | 'access_gap' | 'stale_data';
+export interface FeedbackItem { id: string; agentId: string; question: string; answer: string; comment: string; role: string; category: FailCategory; fix?: FixType; at: string; fixed?: boolean }
 
 export interface ExtState {
   switches: LayerSwitches;
@@ -36,7 +37,8 @@ export interface ExtState {
   raciStyle: RaciStyle;
   cost?: CostLevers;
   incidents: { open: { id: string; openedAt: string }[]; postmortems: Postmortem[] };
-  quality: { fixes: FixType[]; feedback: FeedbackItem[]; runs: number; lastRunAt?: string };
+  /** `evaluated` is the fix set the last eval run saw: accuracy moves only when the eval is re-run. */
+  quality: { fixes: FixType[]; evaluated: FixType[]; feedback: FeedbackItem[]; ups: number; runs: number; lastRunAt?: string };
 }
 
 export const defaultExt = (): ExtState => ({
@@ -47,7 +49,7 @@ export const defaultExt = (): ExtState => ({
   readiness: { answers: {}, targets: {} },
   raciStyle: 'hub',
   incidents: { open: [], postmortems: [] },
-  quality: { fixes: [], feedback: [], runs: 0 },
+  quality: { fixes: [], evaluated: [], feedback: [], ups: 0, runs: 0 },
 });
 
 export function extOf(st: { ext?: Partial<ExtState> } | undefined): ExtState {

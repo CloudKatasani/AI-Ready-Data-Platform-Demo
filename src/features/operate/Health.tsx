@@ -8,7 +8,7 @@ import { toast } from '../../app/toast';
 import { hasExt, NotConfigured } from '../../ext/NotConfigured';
 import { productHealth, type HealthStatus } from '../../ext/health';
 import { defaultLevers, fmtLag, productFreshness, slaMinutes } from '../../ext/cost';
-import type { IncidentScript } from '../../ext/types';
+import { ALL_ON, type IncidentScript } from '../../ext/types';
 import type { IndustryPack, LayerId } from '../../types';
 
 const STEP_MS = 1150;
@@ -85,6 +85,12 @@ function HealthInner({ tab }: { tab: 'overview' | 'incidents' }) {
       <div className="mt-3">{tab === 'overview' ? <Overview /> : <Incidents />}</div>
 
       <Drawer open={breakOpen} onClose={() => setSp({}, { replace: true })} title="Break something" subtitle="Inject a scripted fault and watch the platform react" width="max-w-lg">
+        {ext.studioSim && (
+          <div role="alert" className="mb-3 space-y-2 rounded-md border border-warn/50 bg-warn/10 p-3 text-sm">
+            <p><strong>Agent Studio is simulating layers off.</strong> Incidents and the layer switches can&apos;t run at the same time.</p>
+            <button className="btn-primary" onClick={() => patch((e) => ({ ...e, studioSim: false, studioSwitches: { ...ALL_ON } }))}><Icon name="power" size={13} />Turn all layers on</button>
+          </div>
+        )}
         <ul className="space-y-2">
           {pack.ext!.incidents.map((i) => {
             const isOpen = open.some((o) => o.id === i.id);
@@ -93,7 +99,7 @@ function HealthInner({ tab }: { tab: 'overview' | 'incidents' }) {
                 <div className="flex items-start gap-2">
                   <div className="min-w-0 flex-1"><div className="font-semibold">{i.title}</div><p className="text-muted">{i.fault}</p>
                     <div className="mt-1 text-xs">Affects {i.affects.map((a) => `${pack.products.find((p) => p.id === a.productId)?.name} (${a.status})`).join(', ')}</div></div>
-                  <button className="btn shrink-0" disabled={isOpen} onClick={() => start(i)}>{isOpen ? 'Open' : 'Start'}</button>
+                  <button className="btn shrink-0" disabled={isOpen || ext.studioSim} onClick={() => start(i)}>{isOpen ? 'Open' : 'Start'}</button>
                 </div>
               </li>
             );

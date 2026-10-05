@@ -194,3 +194,77 @@ describe('E9 incidents', () => {
     expect(applyIncidents(pack, defaultExt(), 'AG-01', q)).toBe(q);
   });
 });
+
+// ------------------------------------------------------------------ Wave 3
+import { accuracyOf, feedbackAnswer, runEval, statusOf } from '../src/ext/quality';
+import { analyzeImpact } from '../src/ext/impact';
+
+describe('E10 agent quality loop', () => {
+  const ext = defaultExt();
+  const fs = pack.ext!.feedbackScript;
+
+  it('AG-01 starts at 88% (At risk) with six failures and reaches 94% after the rule fix', () => {
+    const rows = runEval(pack, ext, 'AG-01', []);
+    expect(rows).toHaveLength(50);
+    expect(accuracyOf(rows)).toBe(88);
+    expect(statusOf(88)).toBe('At risk');
+    const fails = rows.filter((r) => r.result === 'fail');
+    expect(fails.map((f) => f.category).sort()).toEqual(['ambiguous_term', 'ambiguous_term', 'missing_rule', 'missing_rule', 'missing_rule', 'wrong_join']);
+    expect(accuracyOf(runEval(pack, ext, 'AG-01', ['rule']))).toBe(94);
+  });
+
+  it('every generated eval question is answered by the real engine', () => {
+    for (const a of pack.agents) for (const r of runEval(pack, ext, a.id, []).filter((x) => x.id.includes('-E'))) expect(r.result, `${a.id}: ${r.question}`).toBe('pass');
+  });
+
+  it('each fix type flips at least one failing question', () => {
+    const before = runEval(pack, ext, 'AG-01', []);
+    for (const f of ['rule', 'verified_query', 'synonym', 'relationship'] as const) {
+      const after = runEval(pack, ext, 'AG-01', [f]);
+      expect(after.filter((r, i) => r.result === 'pass' && before[i].result === 'fail').length, f).toBeGreaterThan(0);
+    }
+  });
+
+  it('the rule fix changes the Agent Studio answer, computed from data', () => {
+    const a = persona(pack, 'A');
+    const base = respond(pack, 'AG-01', fs.question, a, live, () => 'G');
+    const before = feedbackAnswer(pack, ext, 'AG-01', fs.question, { persona: a, live }, base)!;
+    const fixed = { ...ext, quality: { ...ext.quality, fixes: ['rule' as const] } };
+    const after = feedbackAnswer(pack, fixed, 'AG-01', fs.question, { persona: a, live }, base)!;
+    expect(before.summary).not.toEqual(after.summary);
+    expect(fs.compute(true, { persona: a, live }).value).toBeLessThan(fs.compute(false, { persona: a, live }).value);
+    expect(after.trace.some((t) => t.refs.some((r) => r.id === fs.rule.id))).toBe(true);
+  });
+});
+
+describe('E11 impact analysis', () => {
+  const presets = pack.ext!.impactPresets;
+  it('has four presets on real catalog columns, and every node links to a screen', () => {
+    expect(presets).toHaveLength(4);
+    for (const p of presets) {
+      expect(pack.objects.find((o) => `${o.schema}.${o.name}` === p.objectFqn)?.columns.some((c) => c.name === p.column), p.id).toBe(true);
+      const r = analyzeImpact(pack, live, p);
+      expect(r.nodes.length, p.id).toBeGreaterThan(3);
+      for (const n of r.nodes) expect(n.route.length, n.id).toBeGreaterThan(0);
+    }
+  });
+
+  it('applies the severity rules', () => {
+    const drop = analyzeImpact(pack, live, { ...presets[2], change: 'drop' });
+    expect(drop.nodes.filter((n) => ['silver', 'gold', 'semantic'].includes(n.stage)).every((n) => n.severity === 'breaking')).toBe(true);
+    const rename = analyzeImpact(pack, live, presets[2]);
+    expect(rename.nodes.filter((n) => n.stage === 'silver').every((n) => n.severity === 'review')).toBe(true);
+    expect(rename.nodes.filter((n) => n.stage === 'gold').every((n) => n.severity === 'none')).toBe(true);
+    const sem = analyzeImpact(pack, live, presets[1]);
+    expect(sem.nodes.filter((n) => n.stage === 'semantic').every((n) => n.severity === 'review')).toBe(true);
+  });
+
+  it('recommends a major bump with the contract notice period for breaking changes', () => {
+    const grain = analyzeImpact(pack, live, presets[3]);
+    const c = grain.contracts.find((x) => x.productId === 'DP-03')!;
+    expect(c.bump).toBe('major');
+    expect(c.to.split('.')[0]).toBe(String(Number(c.from.split('.')[0]) + 1));
+    expect(c.noticeDays).toBe(30);
+    expect(analyzeImpact(pack, live, presets[0]).contracts.every((x) => x.bump === 'minor')).toBe(true);
+  });
+});

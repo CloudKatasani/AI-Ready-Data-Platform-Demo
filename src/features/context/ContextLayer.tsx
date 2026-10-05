@@ -3,7 +3,8 @@ import { Link, Navigate, useParams, useSearchParams } from 'react-router-dom';
 import { CodeBlock, layerColor, PageHeader } from '../../components/ui';
 import { Icon } from '../../components/icons';
 import { cls, fmtNum } from '../../lib/format';
-import { useLive, usePack, usePackPath } from '../../app/context';
+import { useExt, useLive, usePack, usePackPath } from '../../app/context';
+import { extraVerifiedQueries, liveRules, liveSynonyms } from '../../ext/quality';
 import { verifiedQueriesLive } from '../../mock-snowflake/shared-schemas';
 import { tokens } from '../../agents/engine/matcher';
 
@@ -107,8 +108,13 @@ function Inner({ section }: { section: (typeof SECTIONS)[number]['id'] }) {
   const path = usePackPath();
   const [sp, setSp] = useSearchParams();
   const ctx = pack.context;
-  const vqs = verifiedQueriesLive(pack, live);
-  const counts: Record<string, number> = { instructions: ctx.instructions.length, rules: ctx.rules.length, 'verified-queries': vqs.length, synonyms: ctx.synonyms.length, search: ctx.documents.length };
+  const [ext] = useExt();
+  // Fixes applied from Agent Quality feedback write here (session state), alongside the pack's own context.
+  const rules = liveRules(pack, ext);
+  const synonyms = liveSynonyms(pack, ext);
+  const vqs = [...verifiedQueriesLive(pack, live), ...extraVerifiedQueries(pack, ext)];
+  const added = new Set([...rules.slice(ctx.rules.length).map((r) => r.id), ...extraVerifiedQueries(pack, ext).map((v) => v.id), ...synonyms.slice(ctx.synonyms.length).map((x) => x.synonym)]);
+  const counts: Record<string, number> = { instructions: ctx.instructions.length, rules: rules.length, 'verified-queries': vqs.length, synonyms: synonyms.length, search: ctx.documents.length };
   const hl = sp.get('rule') ?? pack.signature.ruleId;
   const svFilter = sp.get('sv') ?? '';
   const [openVq, setOpenVq] = useState<string | null>(null);
@@ -144,9 +150,9 @@ function Inner({ section }: { section: (typeof SECTIONS)[number]['id'] }) {
             <table className="min-w-full text-sm">
               <thead className="bg-surface2 text-left text-xs"><tr><th className="px-3 py-2">Rule</th><th className="px-3 py-2">Domain</th><th className="px-3 py-2">Rule text</th><th className="px-3 py-2">Applies to metric</th><th className="px-3 py-2">Source document</th></tr></thead>
               <tbody>
-                {ctx.rules.map((r) => (
+                {rules.map((r) => (
                   <tr key={r.id} className={cls('border-t border-line/70 align-top', r.id === hl && 'bg-[rgb(var(--layer-context)/0.12)]')}>
-                    <td className="mono px-3 py-2 text-xs font-semibold">{r.id}</td>
+                    <td className="mono px-3 py-2 text-xs font-semibold">{r.id}{added.has(r.id) && <span className="ml-1 rounded bg-good/15 px-1 text-[10px] font-semibold text-good">Added from feedback</span>}</td>
                     <td className="px-3 py-2 text-xs">{r.domain}</td>
                     <td className="px-3 py-2">{r.text}</td>
                     <td className="mono px-3 py-2 text-xs">{r.metric.startsWith('SV_') ? <Link className="link" to={path(`semantic/${r.metric.split('.')[0]}`)}>{r.metric}</Link> : r.metric}</td>
@@ -171,7 +177,7 @@ function Inner({ section }: { section: (typeof SECTIONS)[number]['id'] }) {
                 <li key={v.id}>
                   <button className="flex w-full flex-wrap items-center gap-2 px-3 py-2 text-left text-sm hover:bg-surface2/60" aria-expanded={openVq === v.id} onClick={() => setOpenVq(openVq === v.id ? null : v.id)}>
                     <span className="mono w-16 shrink-0 text-xs text-muted">{v.id}</span>
-                    <span className="min-w-0 flex-1">{v.question}</span>
+                    <span className="min-w-0 flex-1">{v.question}{added.has(v.id) && <span className="ml-1 rounded bg-good/15 px-1 text-[10px] font-semibold text-good">Added from feedback</span>}</span>
                     <span className="mono text-xs text-muted">{v.semanticView}</span>
                     <span className="text-xs text-muted">{v.verifiedBy} · {v.verifiedOn}</span>
                   </button>
@@ -183,9 +189,9 @@ function Inner({ section }: { section: (typeof SECTIONS)[number]['id'] }) {
         )}
         {section === 'synonyms' && (
           <div className="grid gap-x-6 sm:grid-cols-2 lg:grid-cols-3">
-            {ctx.synonyms.map((s) => (
+            {synonyms.map((s) => (
               <div key={s.term + s.synonym} className="flex items-center gap-2 border-b border-line/70 py-1.5 text-sm">
-                <span className="mono">“{s.synonym}”</span><Icon name="arrowRight" size={12} className="text-muted" /><span className="font-medium">{s.term}</span><span className="ml-auto text-xs text-muted">{s.scope}</span>
+                <span className="mono">“{s.synonym}”</span><Icon name="arrowRight" size={12} className="text-muted" /><span className="font-medium">{s.term}</span>{added.has(s.synonym) && <span className="ml-1 rounded bg-good/15 px-1 text-[10px] font-semibold text-good">Added from feedback</span>}<span className="ml-auto text-xs text-muted">{s.scope}</span>
               </div>
             ))}
           </div>

@@ -119,6 +119,11 @@ export interface FeedbackScript {
   relationship: { view: string; label: string; detail: string };
   /** Computes the answer with or without the business rule applied. */
   compute: (ruleApplied: boolean, ctx: ScenarioContext) => { value: number; valueText: string; summary: string; table?: AgentAnswer['table']; sql: string };
+  /**
+   * The six failing AG-01 eval questions (three missing rule, two ambiguous term, one wrong join). Each passes once its
+   * fix is in the context or semantic state; expected and wrong answers are computed from the synthetic data.
+   */
+  evalItems: { id: string; question: string; category: 'missing_rule' | 'ambiguous_term' | 'wrong_join'; fix: 'rule' | 'verified_query' | 'synonym' | 'relationship'; expected: (ctx: ScenarioContext) => string; wrong: (ctx: ScenarioContext) => string }[];
 }
 
 // ---------------------------------------------------------------- E11 impact

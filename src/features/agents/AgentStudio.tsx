@@ -12,6 +12,7 @@ import { ALL_ON, SWITCHES } from '../../ext/types';
 import { ConfidenceBadge, SwitchRow } from '../why/parts';
 import { applyIncidents } from '../../ext/health';
 import { useAccuracy } from '../../ext/hooks';
+import { classify, feedbackAnswer } from '../../ext/quality';
 import { respond } from '../../agents/engine/respond';
 import { useStore } from '../../store';
 import { toast } from '../../app/toast';
@@ -172,7 +173,7 @@ function Sources({ pack, a }: { pack: IndustryPack; a: AgentAnswer }) {
   );
 }
 
-function AnswerView({ m, onAsk, animate, onSwitch, access }: { m: Msg; onAsk: (q: string) => void; animate: boolean; onSwitch: (id: string) => void; access: (id: string) => AccessCode }) {
+function AnswerView({ m, onAsk, animate, onSwitch, access, agentId }: { m: Msg; onAsk: (q: string) => void; animate: boolean; onSwitch: (id: string) => void; access: (id: string) => AccessCode; agentId: string }) {
   const pack = usePack();
   const path = usePackPath();
   const navigate = useNavigate();
@@ -243,10 +244,44 @@ function AnswerView({ m, onAsk, animate, onSwitch, access }: { m: Msg; onAsk: (q
                 ? <button className="chip border-good/40 bg-good/10 text-good" onClick={() => onAsk(m.text)}><Icon name="check" size={11} />Access granted — ask again</button>
                 : <button className="btn-primary text-xs" onClick={() => { requestAccess(pack.profile.id, persona.roleId, req, `Requested from Agent Studio: "${m.text}"`, '90d'); toast(`Access to ${req} requested · waiting for the data steward`); }}><Icon name="key" size={13} />Request access</button>)}
           </div>
+          {!m.sim && <div className="border-t border-line/60 pt-1.5"><Thumbs m={m} agentId={agentId} /></div>}
           {sql && a.sql && <CodeBlock code={a.sql} maxH="max-h-64" />}
         </>
       )}
     </div>
+  );
+}
+
+function Thumbs({ m, agentId }: { m: Msg; agentId: string }) {
+  const pack = usePack();
+  const persona = usePersona();
+  const [ext, patch] = useExt();
+  const given = ext.quality.feedback.find((f) => f.id === m.id);
+  const [vote, setVote] = useState<'up' | 'down' | null>(given ? 'down' : null);
+  const [comment, setComment] = useState('');
+  const [open, setOpen] = useState(false);
+  const fs = pack.ext?.feedbackScript;
+  const submit = () => {
+    const a = m.answer!;
+    const c = classify(pack, agentId, m.text, a);
+    patch((e) => ({ ...e, quality: { ...e.quality, feedback: [{ id: m.id, agentId, question: m.text, answer: a.summary.slice(0, 280), comment: comment.trim(), role: persona.roleId, category: c.category, fix: c.fix, at: new Date().toISOString() }, ...e.quality.feedback.filter((f) => f.id !== m.id)] } }));
+    setOpen(false);
+    setVote('down');
+    toast('Thanks: sent to the data steward’s feedback inbox');
+  };
+  if (vote === 'up') return <span className="inline-flex items-center gap-1 text-xs text-good"><Icon name="thumbUp" size={13} />Thanks</span>;
+  if (vote === 'down' && !open) return <span className="inline-flex items-center gap-1 text-xs text-muted"><Icon name="thumbDown" size={13} />Sent to the steward</span>;
+  return (
+    <span className="inline-flex flex-wrap items-center gap-1">
+      <button className="btn-ghost px-1.5" aria-label="Good answer" onClick={() => { setVote('up'); patch((e) => ({ ...e, quality: { ...e.quality, ups: e.quality.ups + 1 } })); }}><Icon name="thumbUp" size={14} /></button>
+      <button className="btn-ghost px-1.5" aria-label="Bad answer" aria-expanded={open} onClick={() => setOpen(!open)}><Icon name="thumbDown" size={14} /></button>
+      {open && (
+        <form className="flex w-full flex-wrap gap-1.5 pt-1" onSubmit={(e) => { e.preventDefault(); submit(); }}>
+          <input className="input min-w-[200px] flex-1 py-1 text-xs" value={comment} onChange={(e) => setComment(e.target.value)} placeholder={fs && fs.agentId === agentId ? `e.g. ${fs.comment}` : 'What was wrong?'} aria-label="What was wrong with this answer" autoFocus />
+          <button className="btn-primary py-1 text-xs" type="submit">Send feedback</button>
+        </form>
+      )}
+    </span>
   );
 }
 
@@ -307,6 +342,7 @@ function Studio({ a }: { a: Agent }) {
   const [ext, patchExt] = useExt();
   const simOn = ext.studioSim && SWITCHES.some((x) => !ext.studioSwitches[x.id]);
   const acc = useAccuracy();
+  const closeIncidents = () => { patchExt((e) => ({ ...e, incidents: { ...e.incidents, open: [] } })); toast('Incidents closed; layer switches are available'); };
   const scroller = useRef<HTMLDivElement>(null);
   const code = access(a.id);
   const canChat = code === 'G';
@@ -322,6 +358,7 @@ function Studio({ a }: { a: Agent }) {
     const agentMsg: Msg = { id: nextId(), role: 'agent', text: q, persona: persona.roleId };
     try {
       agentMsg.answer = respond(pack, a.id, q, persona, live, (asset) => access(asset));
+      if (agentMsg.answer.kind !== 'decline') agentMsg.answer = feedbackAnswer(pack, ext, a.id, q, { persona, live }, agentMsg.answer) ?? agentMsg.answer;
       if (simOn) {
         // A layer simulation replaces incident effects: the two demos never mix in one answer.
         const sim = simulate(pack, agentMsg.answer, ext.studioSwitches, { persona, live });
@@ -417,7 +454,7 @@ function Studio({ a }: { a: Agent }) {
                 <div className="min-w-0 flex-1">
                   {m.answer ? (
                     <Contain what="answer">
-                      <AnswerView m={m} onAsk={ask} animate={m.id === animateId} onSwitch={(id) => navigate(path(`agents/${id}`))} access={access} />
+                      <AnswerView m={m} onAsk={ask} animate={m.id === animateId} onSwitch={(id) => navigate(path(`agents/${id}`))} access={access} agentId={a.id} />
                     </Contain>
                   ) : (
                     <div role="alert" className="rounded-md border border-bad/40 bg-bad/5 px-3 py-2 text-sm">I couldn&apos;t answer that because of an internal error: <span className="mono text-xs">{m.error}</span></div>
@@ -448,7 +485,17 @@ function Studio({ a }: { a: Agent }) {
       <Drawer open={layersOpen} onClose={() => setLayersOpen(false)} title="Layer switches" subtitle="Simulate answers with layers removed" width="max-w-md">
         <div className="space-y-4 text-sm">
           <p>Turn a layer off and ask a knockout question again to see how the answer degrades. The simulation affects only this chat; the rest of the app keeps every layer on.</p>
+          {ext.incidents.open.length > 0 ? (
+            <div role="alert" className="space-y-2 rounded-md border border-warn/50 bg-warn/10 p-3">
+              <p><strong>{ext.incidents.open.length} data health incident{ext.incidents.open.length > 1 ? 's are' : ' is'} open.</strong> Layer switches and incidents can&apos;t run at the same time, so the two demos never mix in one answer.</p>
+              <div className="flex flex-wrap gap-2">
+                <button className="btn-primary" onClick={() => { closeIncidents(); }}><Icon name="check" size={13} />Close incidents and continue</button>
+                <Link className="btn" to={path('health/incidents')}>Open Data Health</Link>
+              </div>
+            </div>
+          ) : (
           <SwitchRow compact value={ext.studioSwitches} onChange={(id, on) => patchExt((e) => { const sw = { ...e.studioSwitches, [id]: on }; return { ...e, studioSwitches: sw, studioSim: SWITCHES.some((x) => !sw[x.id]) }; })} />
+          )}
           <div>
             <div className="label mb-1">Questions that respond to switches</div>
             {(pack.ext?.knockoutScenarios ?? []).filter((k) => k.agentId === a.id).length

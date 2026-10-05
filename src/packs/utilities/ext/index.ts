@@ -4,6 +4,7 @@ import type { PackExtensions } from '../../../ext/types';
 import type { UtilData } from '../data';
 import { buildKnockout } from './knockout';
 import { incidents, legacyReports, sourceInventory } from './operate';
+import { buildFeedback, impactPresets } from './quality';
 
 export function buildExt(d: UtilData, objects: SfObject[]): PackExtensions {
   return {
@@ -15,7 +16,7 @@ export function buildExt(d: UtilData, objects: SfObject[]): PackExtensions {
     sourceInventory,
     legacyReports,
     incidents,
-    feedbackScript: undefined as unknown as PackExtensions['feedbackScript'],
-    impactPresets: [],
+    feedbackScript: buildFeedback(d),
+    impactPresets,
   };
 }
